@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <!-- <script language="JavaScript" type="text/javascript" src="jquery.min.js"></script>
+    <script language="JavaScript" type="text/javascript" src="jquery-ui-personalized-1.5.2.packed.js"></script>
+    <script language="JavaScript" type="text/javascript" src="sprinkle.js"></script> -->
+    <script language="JavaScript" type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Регистрация</title>
+
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <form class="formCheckPassword" class="registration-form" method="post" autocomplete="on">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="126" height="126" viewBox="0 0 512 512">
+                    <path
+                        d="M64,480H48a32,32,0,0,1-32-32V112A32,32,0,0,1,48,80H64a32,32,0,0,1,32,32V448A32,32,0,0,1,64,480Z" />
+                    <path d="M240,176a32,32,0,0,0-32-32H144a32,32,0,0,0-32,32v28a4,4,0,0,0,4,4H236a4,4,0,0,0,4-4Z" />
+                    <path d="M112,448a32,32,0,0,0,32,32h64a32,32,0,0,0,32-32V418a2,2,0,0,0-2-2H114a2,2,0,0,0-2,2Z" />
+                    <rect x="112" y="240" width="128" height="144" rx="2" ry="2" />
+                    <path
+                        d="M320,480H288a32,32,0,0,1-32-32V64a32,32,0,0,1,32-32h32a32,32,0,0,1,32,32V448A32,32,0,0,1,320,480Z" />
+                    <path
+                        d="M495.89,445.45l-32.23-340c-1.48-15.65-16.94-27-34.53-25.31l-31.85,3c-17.59,1.67-30.65,15.71-29.17,31.36l32.23,340c1.48,15.65,16.94,27,34.53,25.31l31.85-3C484.31,475.14,497.37,461.1,495.89,445.45Z" />
+                </svg>
+            </div>
+            <h1>Регистрация</h1>
+            <div class="input-group">
+                <label for="name">Имя</label>
+                <input autocomplete="on" type="text" id="name" name="name" required placeholder="Введите ваше имя">
+            </div>
+            <div class="input-group">
+                <label for="email">Электронная почта</label>
+                <input type="email" id="email" name="email" required placeholder="Введите ваш Email">
+            </div>
+            <div class="input-group">
+                <label for="email">Номер телефона</label>
+                <input type="tel" id="number" name="number" required placeholder="Введите ваш номер телефона">
+            </div>
+            <div class="input-group">
+                <label for="email">Привязка к Телеграмму</label>
+                <input type="text" id="telegramm_connect" name="telegramm_connect" value="@" required
+                    placeholder="Введите ваше имя пользователя">
+            </div>
+
+            <div class="input-group">
+                <label for="password">Пароль</label>
+                <input class="password field" type="password" id="password" name="password" required
+                    placeholder="Введите ваш пароль">
+            </div>
+            <div class="input-group">
+                <label for="confirm-password">Подтверждение пароля</label>
+                <input class="confirm_password field" type="password" id="confirm_password" name="confirm_password"
+                    required placeholder="Подтвердите ваш пароль">
+
+            </div>
+
+            <button class="regist" onclick="sendData()" type="submit">Зарегистрироваться</button>
+            <p>Уже есть аккаунт? <a href="/login">Войти</a></p>
+            <div id="output"></div>
+
+        </form>
+    </div>
+
+
+    <script>
+        // var form = document.querySelector(".formCheckPassword")
+        // var regBtn = form.querySelector(".regist")
+        // var password = form.querySelector(".password")
+        // var passwordConfirm = form.querySelector(".confirm_password")
+        // var fields = form.querySelector(".field")
+
+
+
+        // form.addEventListener('submit', function (event) {
+        //     event.preventDefault()
+        //     console.log("работает")
+
+        //     var errors = form.querySelectorAll(".error")
+
+        //     for (var i = 0; i < errors.length; i++) {
+        //         errors[i].remove()
+        //     }
+
+        //     if (password.value !== passwordConfirm.value) {
+
+        //         var error = document.createElement("label")
+        //         error.className = "error"
+        //         error.style.color = "red"
+        //         error.innerHTML = "Пароли не совпадают"
+        //         regBtn.parentElement.insertBefore(error, regBtn)
+        //         console.log("не равны")
+        //     }
+
+        // })
+
+        function sendData() {
+            var form = document.querySelector(".formCheckPassword");
+            var regBtn = form.querySelector(".regist")
+
+            var errors = form.querySelectorAll(".error")
+            for (var i = 0; i < errors.length; i++) {
+                errors[i].remove()
+            }
+
+            // var value = document.getElementById('input').value;
+
+            var name = document.getElementById("name").value;
+            var email = document.getElementById("email").value;
+            var number = document.getElementById("number").value;
+            var telegramm_connect = document.getElementById("telegramm_connect").value;
+            var password = document.getElementById("password").value;
+            var passwordConfirm = document.getElementById("confirm_password").value;
+
+            var fields = document.getElementById("field");
+
+            if (password !== passwordConfirm) {
+
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    console.log("addEventListener работает");
+
+                    var error = document.createElement("label");
+                    error.className = "error";
+                    error.style.color = "red";
+                    error.innerHTML = "Пароли не совпадают";
+                    regBtn.parentElement.insertBefore(error, regBtn);
+                    console.log("Пароли не совпадают");
+                });
+            }
+            else {
+
+                $.ajax({
+                    url: '/process',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        'name': name,
+                        'email': email,
+                        "number": number,
+                        "telegramm_connect": telegramm_connect,
+                        "password": password,
+                        "confirm_password": confirm_password,
+                    }),
+
+
+                    success: function (response) {
+                        console.log(response.name + " - имя пользователя");
+                        document.getElementById('output').innerHTML = response.name;
+                    },
+                    error: function (error) {
+                        console.log("Ошибка по считванию формы пользователя");
+                    }
+                });
+
+            }
+        }
+    </script>
+</body>
+
+
+
+</html>

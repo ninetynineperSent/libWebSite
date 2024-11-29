@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ article.title }}
+{% endblock %}
+
+{% block body %}
+<div class='container mt-5'>
+    <h1>{{ article.title }}</h1>
+
+
+    <div class="alert alert-info">
+        <h2>{{ article.title }}</h2>
+        <p>{{ article.intro }}</p>
+        <p><b>{{ article.text }}</b></p>
+        <p><b>Date: {{ article.date }}</b></p>
+        <a href="/feed/{{ article.id }}/delete" class="btn btn-danger">Delete</a>
+        <a href="/feed/{{ article.id }}/update" class="btn btn-success">Edit</a>
+    </div>
+
+</div>
+{% endblock %}\\
