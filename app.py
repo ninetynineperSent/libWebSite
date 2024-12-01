@@ -42,38 +42,51 @@ def hello():
     return render_template("index.html")
 
 
-@app.route("/process", methods=["POST", "GET"])
-def process():
-    data = request.get_json()  # retrieve the data sent from JavaScript
-    # process the data using Python code
-    name = data["name"]
-    email = data["email"]
-    number = data["number"]
-    telegramm_connect = data["telegramm_connect"]
-    password = data["password"]
-    confirm_password = data["confirm_password"]
+@app.post("/register")
+def register_response():
+    try:
+        data = request.get_json()  # Получаем JSON данные
+        name = data.get("name")
+        email = data.get("email")
+        number = data.get("number")
+        telegramm_connect = data.get("telegramm_connect")
+        password = data.get("password")
 
-    user = User(
-        name=name,
-        email=email,
-        number=number,
-        telegramm_connect=telegramm_connect,
-        password=password,
-    )
+        if not data:
+            return jsonify({"message": "Нет данных"}), 400
 
-    return jsonify(name=name)
+        user = User(
+            name=name,
+            email=email,
+            number=number,
+            telegramm_connect=telegramm_connect,
+            password=password,
+        )
+        try:
+            # Пытаемся добавить статью в БД
+            db.session.add(user)
+            db.session.commit()
+            # Перенаправляем пользователя на главную страничку
+            return (
+                jsonify(
+                    {
+                        "message": f"Пользователь добавлен в БД email: {email} pass: {password}"
+                    }
+                ),
+                200,
+            )
+        except:
+            # Выдаем ошибку если что-то не так
+            return jsonify({"message": "Такой пользователь уже есть в БД"}), 402
 
-    # return jsonify(
-    #     name=name,
-    #     email=email,
-    #     number=number,
-    #     telegramm_connect=telegramm_connect,
-    #     password=password,
-    # )  # return the result to JavaScript
+        # Возвращаем JSON ответ
+
+    except Exception as e:
+        return jsonify({"message": f"Ошибка: {str(e)}"}), 500
 
 
 # Регистрация
-@app.route("/register", methods=["POST", "GET"])
+@app.route("/register")
 def register():
     # # Проверяем запрос
     # if request.method == "POST":
