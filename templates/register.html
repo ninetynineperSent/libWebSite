@@ -18,7 +18,7 @@
 
     <div class="container">
 
-        <form class="formCheckPassword" class="registration-form" method="post" autocomplete="on">
+        <form method="post" autocomplete="on">
             <div class="logo">
                 <svg xmlns="http://www.w3.org/2000/svg" width="126" height="126" viewBox="0 0 512 512">
                     <path
@@ -63,7 +63,7 @@
 
             </div>
 
-            <button class="regist" onclick="sendData()" type="submit">Зарегистрироваться</button>
+            <button id="registerButton" type="button" onclick="btnClick()">Зарегистрироваться</button>
             <p>Уже есть аккаунт? <a href="/login">Войти</a></p>
             <div id="output"></div>
 
@@ -72,97 +72,77 @@
 
 
     <script>
-        // var form = document.querySelector(".formCheckPassword")
-        // var regBtn = form.querySelector(".regist")
-        // var password = form.querySelector(".password")
-        // var passwordConfirm = form.querySelector(".confirm_password")
-        // var fields = form.querySelector(".field")
+        async function sendData(data) {
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Для JSON данных
+                    },
+                    body: JSON.stringify(data) // Преобразуем данные в JSON
+                });
 
-
-
-        // form.addEventListener('submit', function (event) {
-        //     event.preventDefault()
-        //     console.log("работает")
-
-        //     var errors = form.querySelectorAll(".error")
-
-        //     for (var i = 0; i < errors.length; i++) {
-        //         errors[i].remove()
-        //     }
-
-        //     if (password.value !== passwordConfirm.value) {
-
-        //         var error = document.createElement("label")
-        //         error.className = "error"
-        //         error.style.color = "red"
-        //         error.innerHTML = "Пароли не совпадают"
-        //         regBtn.parentElement.insertBefore(error, regBtn)
-        //         console.log("не равны")
-        //     }
-
-        // })
-
-        function sendData() {
-            var form = document.querySelector(".formCheckPassword");
-            var regBtn = form.querySelector(".regist")
-
-            var errors = form.querySelectorAll(".error")
-            for (var i = 0; i < errors.length; i++) {
-                errors[i].remove()
+                if (response.status === 500) {
+                    console.log("HTTP error! status")
+                }
+                else if (response.status === 402) {
+                    const result = await response.json();
+                    console.log("Не успешно", result)
+                }
+                else {
+                    const result = await response.json(); // Парсим JSON ответ
+                    console.log('Успешно:', result);
+                    window.location.href = "/login"
+                }
+            }
+            catch (error) {
+                console.error('Ошибка:', error);
+                // ... Обработка ошибки ...
             }
 
-            // var value = document.getElementById('input').value;
+        }
 
-            var name = document.getElementById("name").value;
-            var email = document.getElementById("email").value;
-            var number = document.getElementById("number").value;
-            var telegramm_connect = document.getElementById("telegramm_connect").value;
-            var password = document.getElementById("password").value;
-            var passwordConfirm = document.getElementById("confirm_password").value;
+        async function btnClick() {
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const number = document.getElementById("number").value;
+            const telegramm_connect = document.getElementById("telegramm_connect").value;
+            const password = document.getElementById("password").value;
+            const passwordConfirm = document.getElementById("confirm_password").value;
 
-            var fields = document.getElementById("field");
+            console.log(name, email, number, telegramm_connect, password, passwordConfirm);
+
+            var errors = document.querySelectorAll(".error");
+            for (let i = 0; i < errors.length; i++) {
+                errors[i].remove();
+            }
 
             if (password !== passwordConfirm) {
+                const passwordConfirm = document.getElementById("confirm_password");
 
-                form.addEventListener('submit', function (event) {
-                    event.preventDefault();
-                    console.log("addEventListener работает");
+                let error = document.createElement("label");
+                error.className = "error";
+                error.style.color = "red";
+                error.innerHTML = "Пароли не совпадают";
 
-                    var error = document.createElement("label");
-                    error.className = "error";
-                    error.style.color = "red";
-                    error.innerHTML = "Пароли не совпадают";
-                    regBtn.parentElement.insertBefore(error, regBtn);
-                    console.log("Пароли не совпадают");
-                });
+                passwordConfirm.parentElement.insertBefore(error, passwordConfirm);
+
+                console.log("Пароли не совпадают");
+
             }
             else {
-
-                $.ajax({
-                    url: '/process',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        'name': name,
-                        'email': email,
-                        "number": number,
-                        "telegramm_connect": telegramm_connect,
-                        "password": password,
-                        "confirm_password": confirm_password,
-                    }),
-
-
-                    success: function (response) {
-                        console.log(response.name + " - имя пользователя");
-                        document.getElementById('output').innerHTML = response.name;
-                    },
-                    error: function (error) {
-                        console.log("Ошибка по считванию формы пользователя");
-                    }
-                });
-
+                const myData = {
+                    "name": name,
+                    "email": email,
+                    "number": number,
+                    "telegramm_connect": telegramm_connect,
+                    "password": password,
+                };
+                sendData(myData);
             }
+
         }
+
     </script>
 </body>
 
