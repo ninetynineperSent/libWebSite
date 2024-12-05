@@ -62,16 +62,47 @@
                     required placeholder="Подтвердите ваш пароль">
 
             </div>
-
-            <button id="registerButton" type="button" onclick="btnClick()">Зарегистрироваться</button>
-            <p>Уже есть аккаунт? <a href="/login">Войти</a></p>
             <div id="output"></div>
+            <button id="registerButton" type="button">Зарегистрироваться</button>
+            <p>Уже есть аккаунт? <a href="/login">Войти</a></p>
+
 
         </form>
     </div>
 
 
     <script>
+        function showError(input_element, message) {
+            // Создаем ошибку и ее свойства
+            let error = document.createElement("label");
+            error.className = "error";
+            error.style.color = "red";
+            error.style.paddingLeft = "6px";
+            error.style.paddingTop = "6px";
+            error.style.fontSize = "12px";
+            error.innerHTML = message;
+
+            // Удаляем ошибки на страничке
+            const all_errors = input_element.parentElement.querySelectorAll(".error");
+            all_errors.forEach(element => element.remove());
+
+            // Вставляем ошибку над неправильнно веденном поле
+            input_element.parentElement.insertBefore(error, input_element);
+        }
+
+        // Валидация почты
+        function validateEmail(email) {
+            const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+            return regex.test(email);
+        }
+
+        // Валидация номера
+        function validatePhoneNumber(number) {
+            const regex = /^\+?[7-8]([0-9]{10})$/;
+            return regex.test(number);
+        }
+
+        // Отправление даты на сервер flask
         async function sendData(data) {
             try {
                 const response = await fetch('/register', {
@@ -83,16 +114,22 @@
                 });
 
                 if (response.status === 500) {
-                    console.log("HTTP error! status")
+                    console.log("Ошибка сервера! Статус 500");
                 }
-                else if (response.status === 402) {
+                else if (response.status === 409) {
+                    document.getElementById("output").textContent = "Аккаунт с этой почтой или номером телефона уже зарегестрирован";
                     const result = await response.json();
-                    console.log("Не успешно", result)
+                    console.log("Не успешно, ошибка в регистрации, 409:", result);
+
+                }
+                else if (response.status === 400) {
+                    const result = await response.json();
+                    console.log("Не успешно, ошибка в передачи данных, 400:", result);
                 }
                 else {
                     const result = await response.json(); // Парсим JSON ответ
                     console.log('Успешно:', result);
-                    window.location.href = "/login"
+                    window.location.href = "/login";
                 }
             }
             catch (error) {
@@ -103,34 +140,40 @@
         }
 
         async function btnClick() {
-            const name = document.getElementById("name").value;
-            const email = document.getElementById("email").value;
-            const number = document.getElementById("number").value;
-            const telegramm_connect = document.getElementById("telegramm_connect").value;
-            const password = document.getElementById("password").value;
-            const passwordConfirm = document.getElementById("confirm_password").value;
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const number = document.getElementById("number").value.trim();
+            const telegramm_connect = document.getElementById("telegramm_connect").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const passwordConfirm = document.getElementById("confirm_password").value.trim();
+
+            const divOutput = document.getElementById("output");
+            divOutput.textContent = "";
 
             console.log(name, email, number, telegramm_connect, password, passwordConfirm);
 
-            var errors = document.querySelectorAll(".error");
-            for (let i = 0; i < errors.length; i++) {
-                errors[i].remove();
-            }
+            // Удаляем ошибки на страничке
+            const errors = document.querySelectorAll(".error");
+            errors.forEach(error => error.remove());
+
+            is_valid = true;
 
             if (password !== passwordConfirm) {
-                const passwordConfirm = document.getElementById("confirm_password");
-
-                let error = document.createElement("label");
-                error.className = "error";
-                error.style.color = "red";
-                error.innerHTML = "Пароли не совпадают";
-
-                passwordConfirm.parentElement.insertBefore(error, passwordConfirm);
-
+                showError(document.getElementById("confirm_password"), "Пароли не совпадают");
                 console.log("Пароли не совпадают");
-
+                is_valid = false;
             }
-            else {
+            if (!validateEmail(email)) {
+                showError(document.getElementById("email"), "Неккоректный email");
+                console.log("Неккоректный email");
+                is_valid = false;
+            }
+            if (!validatePhoneNumber(number)) {
+                showError(document.getElementById("number"), "Некорректный номер телефона");
+                console.log("Некорректный номер телефона");
+                is_valid = false;
+            }
+            if (is_valid === true) {
                 const myData = {
                     "name": name,
                     "email": email,
@@ -140,8 +183,8 @@
                 };
                 sendData(myData);
             }
-
         }
+        document.getElementById("registerButton").addEventListener("click", btnClick);
 
     </script>
 </body>

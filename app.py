@@ -2,6 +2,7 @@
 from flask import Flask, render_template, url_for, request, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # Создание веб-приложения
@@ -21,9 +22,6 @@ db = SQLAlchemy(app)
 #     text = db.Column(db.Text, nullable=False)
 #     date = db.Column(db.String, default=datetime.today().strftime("%d/%m/%y %H:%M"))
 
-# def __repr__(self):
-#     return "<Article %r>" % self.id
-
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,6 +40,12 @@ def hello():
     return render_template("index.html")
 
 
+# Регистрация
+@app.route("/register")
+def register():
+    return render_template("register.html")
+
+
 @app.post("/register")
 def register_response():
     try:
@@ -55,6 +59,13 @@ def register_response():
         if not data:
             return jsonify({"message": "Нет данных"}), 400
 
+        existing_user = User.query.filter(
+            (User.email == email) | (User.number == number)
+        ).first()
+
+        if existing_user:
+            return jsonify({"message": "Такой пользователь уже есть в БД"}), 409
+
         user = User(
             name=name,
             email=email,
@@ -62,63 +73,22 @@ def register_response():
             telegramm_connect=telegramm_connect,
             password=password,
         )
-        try:
-            # Пытаемся добавить статью в БД
-            db.session.add(user)
-            db.session.commit()
-            # Перенаправляем пользователя на главную страничку
-            return (
-                jsonify(
-                    {
-                        "message": f"Пользователь добавлен в БД email: {email} pass: {password}"
-                    }
-                ),
-                200,
-            )
-        except:
-            # Выдаем ошибку если что-то не так
-            return jsonify({"message": "Такой пользователь уже есть в БД"}), 402
 
-        # Возвращаем JSON ответ
+        # Пытаемся добавить статью в БД
+        db.session.add(user)
+        db.session.commit()
+        # Перенаправляем пользователя на главную страничку
+        return (
+            jsonify(
+                {
+                    "message": f"Пользователь добавлен в БД email: ({email} pass: {password})"
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         return jsonify({"message": f"Ошибка: {str(e)}"}), 500
-
-
-# Регистрация
-@app.route("/register")
-def register():
-    # # Проверяем запрос
-    # if request.method == "POST":
-    #     name = request.form["name"]
-    #     email = request.form["email"]
-    #     number = request.form["number"]
-    #     telegramm_connect = request.form["telegramm_connect"]
-    #     password = request.form["password"]
-    #     confirm_password = request.form["confirm_password"]
-
-    #     user = User(
-    #         name=name,
-    #         email=email,
-    #         number=number,
-    #         telegramm_connect=telegramm_connect,
-    #         password=password,
-    #     )
-
-    #     try:
-    #         # Пытаемся добавить статью в БД
-    #         db.session.add(user)
-    #         db.session.commit()
-    #         # Перенаправляем пользователя на главную страничку
-    #         return redirect("/home")
-    #     except:
-    #         # Выдаем ошибку если что-то не так
-    #         return "Ошибка при добавлении пользователя :("
-
-    # else:
-    #     # Подгружаем html страничку
-    #     return render_template("register.html")
-    return render_template("register.html")
 
 
 # Вход

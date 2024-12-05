@@ -44,8 +44,6 @@ input {
 	border-radius: 8px;
 	font-size: 16px;
 	box-sizing: border-box;
-
-
 }
 
 input:focus {
@@ -83,9 +81,8 @@ a:hover {
 	text-decoration: underline;
 }
 
-.error_pass {
+#output {
+	text-align: center;
 	color: red;
-	padding-top: 6px;
-	padding-left: 6px;
-	font-size: 12px;
+	padding-bottom: 0.75rem;
 }
