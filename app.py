@@ -23,6 +23,7 @@ db = SQLAlchemy(app)
 #     date = db.Column(db.String, default=datetime.today().strftime("%d/%m/%y %H:%M"))
 
 
+# Создаем объект базы данных
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(15), nullable=False)
@@ -40,15 +41,17 @@ def hello():
     return render_template("index.html")
 
 
-# Регистрация
+# Создание страничку регистрации
 @app.route("/register")
 def register():
     return render_template("register.html")
 
 
+# Пост обработка странички регистрации
 @app.post("/register")
 def register_response():
     try:
+        # пробуем считать форму(данные) с сайта
         data = request.get_json()  # Получаем JSON данные
         name = data.get("name")
         email = data.get("email")
@@ -56,16 +59,20 @@ def register_response():
         telegramm_connect = data.get("telegramm_connect")
         password = data.get("password")
 
+        # Если данных нет, выводим ошибку в консоль в браузере
         if not data:
             return jsonify({"message": "Нет данных"}), 400
 
+        # Проверяем есть ли такой пользователь уже в БД
         existing_user = User.query.filter(
             (User.email == email) | (User.number == number)
         ).first()
 
+        # Если такой пользователь уже есть, то выводим ошибку
         if existing_user:
             return jsonify({"message": "Такой пользователь уже есть в БД"}), 409
 
+        # Объект базы данных
         user = User(
             name=name,
             email=email,
@@ -77,7 +84,7 @@ def register_response():
         # Пытаемся добавить статью в БД
         db.session.add(user)
         db.session.commit()
-        # Перенаправляем пользователя на главную страничку
+        # Возвращаем хороший протокол
         return (
             jsonify(
                 {
@@ -86,12 +93,12 @@ def register_response():
             ),
             200,
         )
-
+    # В противном случае возвращаем любую другую ошибку
     except Exception as e:
         return jsonify({"message": f"Ошибка: {str(e)}"}), 500
 
 
-# Вход
+# Создаем страничку входа
 @app.route("/login")
 def login():
     # Подгружаем html страничку

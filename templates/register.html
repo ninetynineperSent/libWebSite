@@ -72,9 +72,11 @@
 
 
     <script>
+        // Функция для вывода ошибки
         function showError(input_element, message) {
             // Создаем ошибку и ее свойства
             let error = document.createElement("label");
+            // Задаем параметры для элемента ошибки 
             error.className = "error";
             error.style.color = "red";
             error.style.paddingLeft = "6px";
@@ -82,11 +84,11 @@
             error.style.fontSize = "12px";
             error.innerHTML = message;
 
-            // Удаляем ошибки на страничке
+            // Удаляем ошибки на страничке, все прошлые
             const all_errors = input_element.parentElement.querySelectorAll(".error");
             all_errors.forEach(element => element.remove());
 
-            // Вставляем ошибку над неправильнно веденном поле
+            // Вставляем ошибку над неправильнно веденном поле, новую
             input_element.parentElement.insertBefore(error, input_element);
         }
 
@@ -105,6 +107,7 @@
         // Отправление даты на сервер flask
         async function sendData(data) {
             try {
+                // Осуществляем отправку через fetch
                 const response = await fetch('/register', {
                     method: 'POST',
                     headers: {
@@ -113,33 +116,39 @@
                     body: JSON.stringify(data) // Преобразуем данные в JSON
                 });
 
+                // Если статус ошибки 500, то выдается соответствующая ошибка
                 if (response.status === 500) {
-                    console.log("Ошибка сервера! Статус 500");
+                    con
+                    sole.log("Ошибка сервера! Статус 500");
                 }
+                // Если ошибка 409, то такой пользователь уже иметтся в БД
                 else if (response.status === 409) {
+                    // Обрабатываем ошибку для регистрации с имеющимся пользователем в бд
                     document.getElementById("output").textContent = "Аккаунт с этой почтой или номером телефона уже зарегестрирован";
                     const result = await response.json();
                     console.log("Не успешно, ошибка в регистрации, 409:", result);
-
                 }
+                // Если ошибка 400, то ошибка в передачи данных
                 else if (response.status === 400) {
                     const result = await response.json();
                     console.log("Не успешно, ошибка в передачи данных, 400:", result);
                 }
+                // В остальных случаях все успешно
                 else {
                     const result = await response.json(); // Парсим JSON ответ
                     console.log('Успешно:', result);
-                    window.location.href = "/login";
+                    window.location.href = "/login";  // Перенаправляем на страничку /login
                 }
             }
             catch (error) {
+                // Выдачи ошибки
                 console.error('Ошибка:', error);
-                // ... Обработка ошибки ...
             }
-
         }
 
+        // Функция для нажатия на кнопку
         async function btnClick() {
+            // Достаем нужные поля ввода и их значения
             const name = document.getElementById("name").value.trim();
             const email = document.getElementById("email").value.trim();
             const number = document.getElementById("number").value.trim();
@@ -147,15 +156,18 @@
             const password = document.getElementById("password").value.trim();
             const passwordConfirm = document.getElementById("confirm_password").value.trim();
 
+            // Обнуляем ошибку для регистрации(с имеющимся пользователем в бд)
             const divOutput = document.getElementById("output");
             divOutput.textContent = "";
 
+            // Маленькая проверка
             console.log(name, email, number, telegramm_connect, password, passwordConfirm);
 
             // Удаляем ошибки на страничке
             const errors = document.querySelectorAll(".error");
             errors.forEach(error => error.remove());
 
+            // Для проверки правильности ввода каждого поля
             is_valid = true;
 
             if (password !== passwordConfirm) {
@@ -174,6 +186,7 @@
                 is_valid = false;
             }
             if (is_valid === true) {
+                // Создаем переменную со всеми данными
                 const myData = {
                     "name": name,
                     "email": email,
@@ -181,6 +194,7 @@
                     "telegramm_connect": telegramm_connect,
                     "password": password,
                 };
+                // Передаем все данные в функцию
                 sendData(myData);
             }
         }
