@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ссылка-кнопка с поиском</title>
+    <style>
+        /* Стили для ссылки-кнопки */
+        .search-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+            color: white;
+            text-decoration: none;
+            background-color: #007BFF;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-link:hover {
+            background-color: #0056b3;
+        }
+
+        .search-link svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+            margin-right: 8px;
+            /* Отступ между иконкой и текстом */
+        }
+
+        .search-link:focus {
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="#" class="search-link">
+        <!-- SVG иконка лупы -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path
+                d="M10 2a8 8 0 105.29 14.71l5 5a1 1 0 001.42-1.42l-5-5A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z" />
+        </svg>
+        Искать
+    </a>
+</body>
+
+</html>

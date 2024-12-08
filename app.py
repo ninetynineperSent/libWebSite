@@ -19,7 +19,7 @@ db = SQLAlchemy(app)
 
 
 # Создание класса в базе данных
-# class Book(db.Model):
+# class Books(db.Model):
 #     id = db.Column(db.Integer, primary_key=True)
 #     title = db.Column(db.String(100), nullable=False)
 #     intro = db.Column(db.String(300), nullable=False)
@@ -37,6 +37,12 @@ class User(db.Model):
     password = db.Column(db.String(100), nullable=False)
 
 
+@app.route("/logout")
+def logout():
+    session.clear()  # Очистка данных сессии
+    return redirect("/login")  # Перенаправление на страницу входа
+
+
 # Создание главной странички
 @app.route("/")
 @app.route("/home")
@@ -49,6 +55,12 @@ def home():
     else:
         # Перенаправляем на страницу входа, если пользователь не авторизован
         return redirect("/login")
+
+
+@app.route("/profile")
+def profile():
+    user_name = session.get("user_name")
+    return render_template("profile.html", user_name=user_name)
 
 
 # Создание страничку регистрации

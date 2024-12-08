@@ -12,33 +12,49 @@
   body {
     font-family: 'Arial', sans-serif;
     background: #EDE0D4;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-
+    text-align: center;
   }
 
-  .header {
+  .container {
+    background: #EDE0D4;
     display: flex;
-    justify-content: space-between;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    height: 100px;
     align-items: center;
-    background-color: #E6CCB2;
-    padding: 1rem 2rem;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    max-width: 1200px;
+    justify-content: center;
+    width: 100%;
+  }
+
+  header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
   }
 
   .header-container {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 1rem;
-    width: 100%;
+    background-color: #E6CCB2;
+    padding: 1rem 2rem;
+    /* низ потом бока */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    width: 70%;
+    min-width: 700px;
   }
 
   .profile-section {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
+  }
+
+  .profile-section-logout {
+    justify-content: center;
     gap: 0.5rem;
   }
 
@@ -65,15 +81,31 @@
   }
 
   .header-link {
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
     white-space: nowrap;
     background-color: #B08968;
     color: black;
     text-decoration: none;
-    display: inline-block;
-    text-align: center;
     border-radius: 8px;
     padding: 0.5rem 1rem;
-    font-size: 16px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s ease;
+  }
+
+  .header-link2 {
+    white-space: nowrap;
+    /* background-color: #B08968; */
+    color: black;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    /* border-radius: 8px; */
+    /* padding: 0.5rem 1rem; */
+    font-size: 12px;
+    font-weight: 700;
     cursor: pointer;
     transition: background-color 0.3s ease;
   }
@@ -91,48 +123,70 @@
 </style>
 
 <body>
-  <header class="header">
-    <div class="header-container">
-      <div class="profile-section">
-        <div class="avatar"></div>
-        <a href="/profile" id="profileLink" class="header-link">Профиль</a>
-      </div>
-      <a href="/logout" id="logoutLink" class="header-link">Выйти</a>
-      <div class="search-section">
-        <input type="text" id="searchInput" placeholder="Найти книгу..." class="search-input">
-        <a href="#" id="searchLink" class="header-link">Искать</a>
-      </div>
-      <a href=" /about" id="aboutLink" class="header-link">О сайте</a>
-    </div>
-  </header>
-
-  {% block body %} {% endblock %}
-
   <div class="container">
-    <footer class="row row-cols-1 row-cols-sm-2 row-cols-md-5 py-5 my-5 border-top">
-      <div class="col mb-3">
-        <a href="/" class="d-flex align-items-center mb-3 link-body-emphasis text-decoration-none">
-          <svg class="bi me-2" width="40" height="32">
-            <use xlink:href="#bootstrap"></use>
+    <header class="header">
+      <div class="header-container">
+
+        <a href="/home">
+          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 512 512">
+            <path d="M64,480H48a32,32,0,0,1-32-32V112A32,32,0,0,1,48,80H64a32,32,0,0,1,32,32V448A32,32,0,0,1,64,480Z" />
+            <path d="M240,176a32,32,0,0,0-32-32H144a32,32,0,0,0-32,32v28a4,4,0,0,0,4,4H236a4,4,0,0,0,4-4Z" />
+            <path d="M112,448a32,32,0,0,0,32,32h64a32,32,0,0,0,32-32V418a2,2,0,0,0-2-2H114a2,2,0,0,0-2,2Z" />
+            <rect x="112" y="240" width="128" height="144" rx="2" ry="2" />
+            <path
+              d="M320,480H288a32,32,0,0,1-32-32V64a32,32,0,0,1,32-32h32a32,32,0,0,1,32,32V448A32,32,0,0,1,320,480Z" />
+            <path
+              d="M495.89,445.45l-32.23-340c-1.48-15.65-16.94-27-34.53-25.31l-31.85,3c-17.59,1.67-30.65,15.71-29.17,31.36l32.23,340c1.48,15.65,16.94,27,34.53,25.31l31.85-3C484.31,475.14,497.37,461.1,495.89,445.45Z" />
           </svg>
         </a>
-        <p class="text-body-secondary">© 2024</p>
-      </div>
 
-      <div class="col mb-3">
+        <div class="search-section">
+          <input type="text" id="searchInput" placeholder="Найти книгу..." class="search-input">
+          <div class="search-section-find">
+            <a href="#" id="searchLink" class="header-link">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 512 512">
+                <path
+                  d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
+              </svg>
+              <p style="margin: 0; padding-left: 0.5rem;">Искать</p>
+            </a>
+          </div>
+        </div>
+
+        <a href="/about" id="aboutLink" class="header-link2">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 512 512">
+            <path
+              d="M464 256A208 208 0 1 0 48 256a208 208 0 1 0 416 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm169.8-90.7c7.9-22.3 29.1-37.3 52.8-37.3l58.3 0c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24l0-13.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1l-58.3 0c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z" />
+          </svg>
+          <p style="margin: 0;">О сайте</p>
+        </a>
+
+        <div class="profile-section-logout">
+          <a href="/logout" id="logoutLink" class="header-link2">
+            <div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 512 512">
+                <path
+                  d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z" />
+              </svg>
+              <p style="margin: 0;">Выйти</p>
+            </div>
+          </a>
+        </div>
+
+        <div class="profile-section">
+          <a href="/profile" id="profileLink" class="header-link2">{{ user_name }}</a>
+          <div class="avatar"></div>
+        </div>
 
       </div>
+    </header>
+  </div>
+  <div>
+    {% block body %} {% endblock %}
+  </div>
 
-      <div class="col mb-3">
-        <h5>Section</h5>
-        <ul class="nav flex-column">
-          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Home</a></li>
-          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Features</a></li>
-          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Pricing</a></li>
-          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">FAQs</a></li>
-          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">About</a></li>
-        </ul>
-      </div>
+
+
 
 </body>
 
