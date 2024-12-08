@@ -1,12 +1,16 @@
 # Имопртирование библиотек
-from flask import Flask, render_template, url_for, request, redirect, jsonify
+from flask import Flask, render_template, url_for, request, redirect, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
 
-
+# Случайный 32-символьный ключ
+SECRET_KEY = secrets.token_hex(16)
+print(SECRET_KEY)
 # Создание веб-приложения
 app = Flask(__name__)
+app.secret_key = SECRET_KEY
 # Настройки для работы сервера и сайта
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///base.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -36,9 +40,15 @@ class User(db.Model):
 # Создание главной странички
 @app.route("/")
 @app.route("/home")
-def hello():
-    # Подгружаем html страничку
-    return render_template("index.html")
+def home():
+    # Проверяем, авторизован ли пользователь
+    user_name = session.get("user_name")
+
+    if user_name:
+        return render_template("home.html", user_name=user_name)
+    else:
+        # Перенаправляем на страницу входа, если пользователь не авторизован
+        return redirect("/login")
 
 
 # Создание страничку регистрации
@@ -105,86 +115,44 @@ def login():
     return render_template("login.html")
 
 
-# # Вывод всех статей
-# @app.route("/feed")
-# def feed():
-#     # Берем из базы данных статьи и сортируем по дате
-#     articles = Book.query.order_by(Book.id.desc()).all()
-#     return render_template("feed.html", articles=articles)
+@app.post("/login")
+def login_response():
+    try:
+        data = request.get_json()  # Получаем JSON данные
+        email = data.get("email")
+        password = data.get("password")
 
+        # Если данных нет, выводим ошибку в консоль в браузере
+        if not data:
+            return jsonify({"message": "Нет данных"}), 400
 
-# # Офромление полной статьи
-# @app.route("/feed/<int:id>")
-# def feed_detail(id):
-#     article = Article.query.get_or_404(id)
-#     return render_template("feed_detail.html", article=article)
+        existing_user = User.query.filter_by(email=email).first()
 
+        if existing_user:
+            if existing_user.password == password:
+                session["user_id"] = existing_user.id
+                session["user_name"] = existing_user.name
+                session["user_email"] = existing_user.email
 
-# # Удаление статьи
-# @app.route("/feed/<int:id>/delete")
-# def feed_del(id):
-#     article = Article.query.get_or_404(id)
+                return (
+                    jsonify(
+                        {
+                            "message": f"Вы успешно вошли в аккаунт {email}. Добро пожаловать, {existing_user.name}!"
+                        }
+                    ),
+                    200,
+                )
+            else:
+                return jsonify({"message": "Пароли не совпадают!"}), 401
+        else:
+            return (
+                jsonify({"message": f"Пользователя с почтой {email} не существует"}),
+                404,
+            )
 
-#     try:
-#         db.session.delete(article)
-#         db.session.commit()
-#         return redirect("/feed")
+    except Exception as e:
+        return jsonify({"message": f"Ошибка: {str(e)}"}), 500
 
-#     except:
-#         return "Error with delete article :("
-#         # return "Error with delete article :(", {"Refresh": "2; url=/feed/<int:id>/"}
-
-
-# # Изменение статьи для добавления статей в БД
-# @app.route("/feed/<int:id>/update", methods=["POST", "GET"])
-# def feed_update(id):
-#     article = Article.query.get_or_404(id)
-#     # Проверяем запрос
-#     if request.method == "POST":
-#         article.title = request.form["title"]
-#         article.intro = request.form["intro"]
-#         article.text = request.form["text"]
-
-#         try:
-#             # Пытаемся добавить статью в БД
-#             db.session.commit()
-#             # Перенаправляем пользователя на главную страничку
-#             return redirect("/feed")
-#         except:
-#             # Выдаем ошибку если что-то не так
-#             return "error with add article :("
-#     else:
-#         return render_template("feed_update.html", article=article)
-
-
-# # Создание статьи для добавления статей в БД
-# @app.route("/create", methods=["POST", "GET"])
-# def create():
-#     # Проверяем запрос
-#     if request.method == "POST":
-#         title = request.form["title"]
-#         intro = request.form["intro"]
-#         text = request.form["text"]
-
-#         article = Book(title=title, intro=intro, text=text)
-
-#         try:
-#             # Пытаемся добавить статью в БД
-#             db.session.add(article)
-#             db.session.commit()
-#             # Перенаправляем пользователя на главную страничку
-#             return redirect("/feed")
-#         except:
-#             # Выдаем ошибку если что-то не так
-#             return "error with add article :("
-#     else:
-#         # Подгружаем html страничку
-#         return render_template("create.html")
-
-
-# @app.route("/user/<string:name>/")
-# def user(name):
-#     return f"User page name - {name} "
 
 # Загрузка
 if __name__ == "__main__":

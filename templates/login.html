@@ -34,11 +34,111 @@
                 <label for="password">Пароль</label>
                 <input type="password" id="password" name="password" required placeholder="Введите ваш пароль">
             </div>
-            <button type="submit">Войти</button>
+            <div id="output"></div>
+            <button id="loginButton" type="button">Войти</button>
             <p>Еще нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
 
         </form>
     </div>
+
+    <script>
+        function showError(input_element, message) {
+            // Создаем ошибку и ее свойства
+            let error = document.createElement("label");
+            // Задаем параметры для элемента ошибки 
+            error.className = "error";
+            error.style.color = "red";
+            error.style.paddingLeft = "6px";
+            error.style.paddingTop = "6px";
+            error.style.fontSize = "12px";
+            error.innerHTML = message;
+
+            // Удаляем ошибки на страничке, все прошлые
+            const all_errors = input_element.parentElement.querySelectorAll(".error");
+            all_errors.forEach(element => element.remove());
+
+            // Вставляем ошибку над неправильнно веденном поле, новую
+            input_element.parentElement.insertBefore(error, input_element);
+        }
+
+        function validateEmail(email) {
+            const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+            return regex.test(email);
+        }
+
+        async function sendData(data) {
+            try {
+                // Осуществляем отправку через fetch
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Для JSON данных
+                    },
+                    body: JSON.stringify(data) // Преобразуем данные в JSON
+                });
+
+
+                if (response.status === 500) {
+                    console.log("Ошибка сервера! Статус 500");
+                }
+                else if (response.status === 400) {
+                    const result = await response.json();
+                    console.log("Не успешно, ошибка в передачи данных, 400:", result);
+                }
+                else if (response.status === 401) {
+                    document.getElementById("output").textContent = "Неверный пароль для данного аккаунта";
+                    const result = await response.json();
+                    console.log("Не успешно, ошибка во входе, 401:", result);
+                }
+                else if (response.status === 404) {
+                    document.getElementById("output").textContent = "Такого пользователя не существует.\nПожалуйста зарегестрируйтесь";
+                    const result = await response.json();
+                    console.log("Не успешно, ошибка во входе, 404:", result);
+                }
+
+                else {
+                    const result = await response.json(); // Парсим JSON ответ
+                    console.log('Успешно:', result);
+                    window.location.href = "/home";  // Перенаправляем на страничку /login
+                }
+            }
+            catch (error) {
+                // Выдачи ошибки
+                console.error('Ошибка:', error);
+            }
+        }
+
+        async function btnClick() {
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            const divOutput = document.getElementById("output");
+            divOutput.textContent = "";
+
+            console.log(email, password)
+
+            const errors = document.querySelectorAll(".error");
+            errors.forEach(error => error.remove());
+
+            is_valid = true;
+
+            if (!validateEmail(email)) {
+                showError(document.getElementById("email"), "Неккоректный email");
+                console.log("Неккоректный email");
+                is_valid = false;
+            }
+            if (is_valid === true) {
+                const myData = {
+                    "email": email,
+                    "password": password,
+                };
+                // console.log(myData)
+                sendData(myData);
+            }
+        }
+        document.getElementById("loginButton").addEventListener("click", btnClick)
+
+    </script>
 
 </body>
 

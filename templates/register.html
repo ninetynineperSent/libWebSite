@@ -43,7 +43,8 @@
             </div>
             <div class="input-group">
                 <label for="email">Номер телефона</label>
-                <input type="tel" id="number" name="number" required placeholder="Введите ваш номер телефона">
+                <input type="tel" id="number" name="number" value="+7" required
+                    placeholder="Введите ваш номер телефона">
             </div>
             <div class="input-group">
                 <label for="email">Привязка к Телеграмму</label>
@@ -100,7 +101,7 @@
 
         // Валидация номера
         function validatePhoneNumber(number) {
-            const regex = /^\+?[7-8]([0-9]{10})$/;
+            const regex = /^\+?[7]([0-9]{10})$/;
             return regex.test(number);
         }
 
@@ -118,8 +119,7 @@
 
                 // Если статус ошибки 500, то выдается соответствующая ошибка
                 if (response.status === 500) {
-                    con
-                    sole.log("Ошибка сервера! Статус 500");
+                    console.log("Ошибка сервера! Статус 500");
                 }
                 // Если ошибка 409, то такой пользователь уже иметтся в БД
                 else if (response.status === 409) {
