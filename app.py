@@ -1,9 +1,20 @@
 # Имопртирование библиотек
-from flask import Flask, render_template, url_for, request, redirect, jsonify, session
+from flask import (
+    Flask,
+    render_template,
+    url_for,
+    request,
+    redirect,
+    jsonify,
+    session,
+    send_file,
+)
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
+import base64
+import io
 
 # Случайный 32-символьный ключ
 SECRET_KEY = secrets.token_hex(16)
@@ -19,12 +30,15 @@ db = SQLAlchemy(app)
 
 
 # Создание класса в базе данных
-# class Books(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     title = db.Column(db.String(100), nullable=False)
-#     intro = db.Column(db.String(300), nullable=False)
-#     text = db.Column(db.Text, nullable=False)
-#     date = db.Column(db.String, default=datetime.today().strftime("%d/%m/%y %H:%M"))
+class Books(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    author = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    volume = db.Column(db.Integer, nullable=False)
+    genre = db.Column(db.String(30), nullable=False)
+    age_limit = db.Column(db.Integer, nullable=False)
+    image = db.Column(db.String(100), nullable=True)
 
 
 # Создаем объект базы данных
@@ -35,6 +49,65 @@ class User(db.Model):
     number = db.Column(db.String(12), nullable=False, unique=True)
     telegramm_connect = db.Column(db.String(50), nullable=False)
     password = db.Column(db.String(100), nullable=False)
+
+
+@app.route("/img_book/<int:book_id>")
+def get_image(book_id):
+    book = Books.query.get_or_404(book_id)
+    if book.image:
+        return send_file(
+            io.BytesIO(book.image),  # Создаем поток из бинарных данных изображения
+            mimetype="image/jpeg",  # Указываем MIME-тип
+            as_attachment=False,  # Показываем изображение в браузере
+        )
+    else:
+        return "", 404
+
+
+@app.get("/addbook")
+def addbook():
+    user_name = session.get("user_name")
+    return render_template("addbook.html", user_name=user_name)
+
+
+@app.post("/addbook")
+def addbook_response():
+    try:
+        data = request.get_json()
+
+        title = data.get("title")
+        author = data.get("author")
+        description = data.get("description")
+        volume = data.get("volume")
+        genre = data.get("genre")
+        age_limit = data.get("age_limit")
+        imageBase64 = data.get("image")
+
+        image = None
+        # print(title, author, description, volume, genre, age_limit)
+
+        if imageBase64:
+            image_filename = f"{title.replace(' ', '_')}.jpg"
+            # Убираем префикс data:image/*
+            image = base64.b64decode(imageBase64.split(",")[1])
+            print("test image")
+
+        new_book = Books(
+            title=title,
+            author=author,
+            description=description,
+            volume=volume,
+            genre=genre,
+            age_limit=age_limit,
+            image=image,
+        )
+
+        db.session.add(new_book)
+        db.session.commit()
+
+        return jsonify({"message": "Книга успешно добавлена!"}), 200
+    except Exception as e:
+        return jsonify({"message": f"Ошибка: {str(e)}"}), 500
 
 
 @app.route("/logout")
@@ -51,7 +124,9 @@ def home():
     user_name = session.get("user_name")
 
     if user_name:
-        return render_template("home.html", user_name=user_name)
+        # Получение всех книг из базы данных
+        books = Books.query.all()
+        return render_template("home.html", user_name=user_name, books=books)
     else:
         # Перенаправляем на страницу входа, если пользователь не авторизован
         return redirect("/login")
@@ -64,7 +139,7 @@ def profile():
 
 
 # Создание страничку регистрации
-@app.route("/register")
+@app.get("/register")
 def register():
     return render_template("register.html")
 
@@ -110,7 +185,7 @@ def register_response():
         return (
             jsonify(
                 {
-                    "message": f"Пользователь добавлен в БД email: ({email} pass: {password})"
+                    "message": f"Пользователь добавлен в БД email: (EMAIL: {email} PASSWORD: {password})"
                 }
             ),
             200,
@@ -121,7 +196,7 @@ def register_response():
 
 
 # Создаем страничку входа
-@app.route("/login")
+@app.get("/login")
 def login():
     # Подгружаем html страничку
     return render_template("login.html")

@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Добавление книги
+{% endblock %}
+
+{% block body %}
+<style>
+    body {
+        font-family: 'monospace';
+        background: #EDE0D4;
+    }
+
+    .container-addbook {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #E6CCB2;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #DDB892;
+        border-radius: 8px;
+        font-size: 16px;
+        box-sizing: border-box;
+        font-family: monospace;
+    }
+
+    .form-group textarea {
+        resize: none;
+        height: 100px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: black;
+        outline: none;
+    }
+
+    .form-buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .form-buttons button {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .form-buttons .submit-button {
+        background-color: #B08968;
+    }
+
+    .form-buttons .submit-button:hover {
+        background-color: #DDB892;
+    }
+
+    .form-buttons .upload-button {
+        background-color: #B08968;
+    }
+
+    .form-buttons .upload-button:hover {
+        background-color: #DDB892;
+    }
+
+    #image {
+        background-color: white;
+    }
+</style>
+<form action="post">
+    <div class="container-addbook">
+        <h1>Добавить книгу</h1>
+        <form action="/addbook" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="title">Название книги</label>
+                <input type="text" id="title" name="title" placeholder="Введите название книги" required>
+            </div>
+
+            <div class="form-group">
+                <label for="author">Автор</label>
+                <input type="text" id="author" name="author" placeholder="Введите имя автора" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Описание</label>
+                <textarea id="description" name="description" placeholder="Введите описание книги"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="volume">Объем книги (в страницах)</label>
+                <input type="number" id="volume" name="volume" placeholder="Введите объем книги" required>
+            </div>
+
+            <div class="form-group">
+                <label for="genre">Жанр</label>
+                <input type="text" id="genre" name="genre" placeholder="Введите жанр" required>
+            </div>
+
+            <div class="form-group">
+                <label for="age">Возрастное ограничение</label>
+                <input type="number" id="age_limit" name="age_limit" placeholder="Введите возрастное ограничение"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label for="image">Загрузить изображение обложки</label>
+                <input type="file" id="image" name="image" accept="image/*">
+            </div>
+
+            <div class="form-buttons">
+                <button type="button" id="submit-button" class="submit-button">Добавить книгу</button>
+            </div>
+        </form>
+    </div>
+</form>
+
+<script>
+    async function sendData(data) {
+        try {
+            // Фетчим
+            const response = await fetch('/addbook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' // Для JSON данных
+                },
+                body: JSON.stringify(data) // Преобразуем данные в JSON
+            });
+
+            if (response.status === 500) {
+                const result = await response.json();
+                console.log("Ошибка сервера! Статус 500", result);
+            }
+
+            else {
+                const result = await response.json(); // Парсим JSON ответ
+                console.log('Успешно:', result);
+                window.location.href = "/home";  // Перенаправляем на страничку /home
+            }
+        }
+        catch (error) {
+            // Выдачи ошибки
+            console.error('Ошибка:', error);
+        }
+    }
+
+    async function btnClick() {
+        const title = document.getElementById("title").value.trim();
+        const author = document.getElementById("author").value.trim();
+        const description = document.getElementById("description").value.trim();
+        const volume = document.getElementById("volume").value.trim();
+        const genre = document.getElementById("genre").value.trim();
+        const age_limit = document.getElementById("age_limit").value.trim();
+
+        // Проверка
+        console.log(title, author, description, volume, genre, age_limit);
+
+        // Наша фотка
+        let imageInput = document.getElementById("image");
+        let imageBase64 = null;
+
+        // Проверка имеются ли загруженные файлы
+        if (imageInput.files && imageInput.files[0]) {
+            // Выбираем первый файл
+            let file = imageInput.files[0];
+            // Создаем объект для чтения файла
+            let reader = new FileReader();
+
+            // Метод срабатывает, когда файл полностью прочитан
+            reader.onloadend = async function () {
+                // Получаем Base64 строку
+                imageBase64 = reader.result;
+                // Создаём объект с данными
+                const myData = {
+                    "title": title,
+                    "author": author,
+                    "description": description,
+                    "volume": volume,
+                    "genre": genre,
+                    "age_limit": age_limit,
+                    "image": imageBase64, // Добавляем закодированное изображение
+                };
+
+                // Лог для проверки
+                console.log("Отправляем данные:", myData);
+                // console.log(imageBase64)
+                // Отправляем данные
+                sendData(myData);
+            };
+            // Чтение файла, и преобразовние его в Base64(кодировку), только после этого выполняется функция reader.onloaded
+            reader.readAsDataURL(file);
+        }
+        else {
+            // Если изображения нет, отправляем только текстовые данные без изображения
+            const myData = {
+                "title": title,
+                "author": author,
+                "description": description,
+                "volume": volume,
+                "genre": genre,
+                "age_limit": age_limit,
+                "image": imageBase64,
+            };
+
+            // Лог для проверки
+            console.log("Отправляем данные (без изображения):", myData);
+            // Отправляем данные
+            sendData(myData);
+        }
+    }
+    // Привязываем функцию к кнопке
+    document.getElementById("submit-button").addEventListener("click", btnClick);
+
+</script>
+{% endblock %}

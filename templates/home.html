@@ -5,9 +5,44 @@
 {% endblock %}
 
 {% block body %}
-
 <h1 class="">Добро пожаловать, {{ user_name }}!</h1>
-<div>
 
+<style>
+    .books-container {
+        justify-content: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .book-card {
+        /* width: 200px; */
+        padding: 20px;
+        border: 1px solid #E6CCB2;
+        border-radius: 10px;
+        background-color: #E6CCB2;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .book-image {
+        max-width: 100%;
+        margin-bottom: 10px;
+    }
+</style>
+
+<div class="books-container">
+    {% for book in books %}
+    <div class="book-card">
+        {% if book.image %}
+        <img style="height: 300px; border-radius: 4px;" src="img_book/{{ book.id }}" alt="{{ book.title }}"
+            class="book-image">
+        {% endif %}
+        <p style="margin: 0; padding-bottom: 6px; font: 14px ALS Sirius; font-weight: 550;">{{ book.title }}</h2>
+        <p style="margin: 0; color: #767479;">{{ book.author }}</p>
+
+    </div>
+    {% endfor %}
 </div>
+
 {% endblock %}
