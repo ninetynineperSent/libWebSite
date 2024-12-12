@@ -29,18 +29,36 @@
         max-width: 100%;
         margin-bottom: 10px;
     }
+
+    a {
+        color: black;
+        text-decoration: none;
+    }
+
+    .book-card p {
+        word-wrap: break-word;
+        /* Перенос текста, если он слишком длинный */
+        overflow-wrap: break-word;
+        /* Для современных браузеров */
+        margin: 0;
+        font-size: 14px;
+        text-align: left;
+        width: 190px;
+        /* Текст выровнен по левому краю */
+    }
 </style>
 
 <div class="books-container">
     {% for book in books %}
     <div class="book-card">
-        {% if book.image %}
-        <img style="height: 300px; border-radius: 4px;" src="img_book/{{ book.id }}" alt="{{ book.title }}"
-            class="book-image">
-        {% endif %}
-        <p style="margin: 0; padding-bottom: 6px; font: 14px ALS Sirius; font-weight: 550;">{{ book.title }}</h2>
-        <p style="margin: 0; color: #767479;">{{ book.author }}</p>
-
+        <a href="/book_detail/{{ book.id }}">
+            {% if book.image %}
+            <img style="height: 300px; border-radius: 4px;" src="img_book/{{ book.id }}" alt="{{ book.title }}"
+                class="book-image">
+            {% endif %}
+            <p style="margin: 0; padding-bottom: 6px; font: 14px ALS Sirius; font-weight: 550;">{{ book.title }}</p>
+            <p style="margin: 0; font: 14px ALS Sirius; color: #767479;">{{ book.author }}</p>
+        </a>
     </div>
     {% endfor %}
 </div>

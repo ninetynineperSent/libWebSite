@@ -51,6 +51,13 @@ class User(db.Model):
     password = db.Column(db.String(100), nullable=False)
 
 
+@app.route("/book_detail/<int:book_id>")
+def book_details(book_id):
+    user_name = session.get("user_name")
+    book = Books.query.get_or_404(book_id)
+    return render_template("book_detail.html", book=book, user_name=user_name)
+
+
 @app.route("/img_book/<int:book_id>")
 def get_image(book_id):
     book = Books.query.get_or_404(book_id)

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ book.title }}
+{% endblock %}
+
+{% block body %}
+
+<style>
+    .book-container {
+        display: flex;
+        justify-content: center;
+        /* Центрирует содержимое по горизонтали */
+        align-items: center;
+        /* Центрирует содержимое по вертикали */
+        margin: 40px auto;
+        gap: 20px;
+        /* Отступ между картинкой и текстом */
+    }
+
+    .book-image {
+        width: auto;
+        height: 400px;
+        border-radius: 10px;
+        flex-shrink: 0;
+        /* Запрещает сжиматься картинке */
+    }
+
+    .book-details {
+        display: flex;
+        flex-direction: column;
+        /* Располагает текстовые блоки вертикально */
+        justify-content: center;
+        /* Центрирует текстовые блоки по вертикали */
+    }
+
+    .book-title {
+        font-size: 32px;
+        font-weight: bold;
+        margin: 20px 0 10px;
+    }
+
+    .book-author {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .book-info {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    .book-description {
+        font-size: 16px;
+        line-height: 1.5;
+        margin-top: 20px;
+    }
+</style>
+
+<div class="book-container">
+    {% if book.image %}
+    <div>
+        <img src="/img_book/{{ book.id }}" alt="{{ book.title }}" class="book-image">
+        <p style="font-weight: 600; color: #767479; margin: 0; padding-top: 6px; font: 14px ALS Sirius;">
+            Объем {{book.volume}} страниц · {{book.age_limit}}+
+        </p>
+    </div>
+    {% endif %}
+    <div style="width: 600px;">
+        <h1 class="book-title">{{ book.title }}</h1>
+        <h2 class="book-author">Автор: {{ book.author }}</h2>
+        <p class="book-info"><strong>Возрастное ограничение:</strong> {{ book.age_limit }}+</p>
+        <p class="book-info"><strong>Количество страниц:</strong> {{ book.volume }}</p>
+        <p class="book-info"><strong>Жанр:</strong> {{ book.genre }}</p>
+        <p class="book-description"><strong>Описание:</strong></p>
+        <p class="book-description">{{ book.description }}</p>
+    </div>
+</div>
+
+{% endblock %}
