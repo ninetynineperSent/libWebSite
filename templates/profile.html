@@ -5,7 +5,167 @@
 {% endblock %}
 
 {% block body %}
-<div class="book">
-    <h1>Книга</h1>
+
+<style>
+    .profile-container {
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+
+    }
+
+    .profile-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+        max-width: 400px;
+        padding: 20px;
+        border: 1px solid #E6CCB2;
+        border-radius: 10px;
+        background-color: #E6CCB2;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+    }
+
+    .profile-form label {
+        font-size: 14px;
+        font-weight: 600;
+
+    }
+
+    .profile-form input {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    .profile-form button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background-color: #B08968;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .profile-form button:hover {
+        background-color: #DDB892;
+    }
+
+    .avatar-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .avatar-container img {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 10px;
+        border: 2px solid #E6CCB2;
+    }
+
+    .avatar-container input {
+        display: none;
+    }
+
+    .avatar-container label {
+        background-color: #D19A66;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+
+    }
+</style>
+
+<div class="profile-container">
+    <h1
+        style="font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif">
+        Профиль пользователя</h1>
+    <form class="profile-form" method="post">
+
+        <div class="avatar-container">
+            <img src="" alt="Аватар пользователя">
+            <input type="file" id="avatar" name="avatar">
+            <label for="avatar">Изменить аватар</label>
+        </div>
+
+        <div>
+            <label for="name">Имя</label>
+            <input type="text" id="name" name="name" value="{{user_name}}" required>
+        </div>
+
+        <div>
+            <label for="email">Почта</label>
+            <input type="email" id="email" name="email" value="{{user_email}}" required>
+        </div>
+
+        <div>
+            <label for="phone">Номер телефона</label>
+            <input type="tel" id="number" name="number" value="{{user_number}}">
+        </div>
+
+        <div>
+            <label for="telegram">Telegram</label>
+            <input type="text" id="telegram_connect" name="telegram_connect" value="{{user_telegramm}}">
+        </div>
+
+        <div>
+            <label for="password">Старый пароль</label>
+            <input type="password" id="password" name="password" placeholder="Введите старый пароль">
+        </div>
+
+        <div>
+            <label for="password">Новый пароль</label>
+            <input type="password" id="new_password" name="new_password" placeholder="Введите новый пароль">
+        </div>
+
+        <button type="submit">Сохранить изменения</button>
+    </form>
+    <form class="profilee-form">
+        <button style="background-color: rgb(209, 73, 73); color: white;" id="btnDel">
+            Удалить аккаунт
+        </button>
+    </form>
 </div>
+
+<script>
+    async function deleteAcc() {
+        try {
+            const response = await fetch('/profile', {
+                method: 'DELETE',
+            });
+            if (response.status === 500) {
+                console.log("Ошибка сервера! Статус 500");
+            }
+            else if (response.status === 409) {
+                const result = await response.json();
+                console.log("Не успешно, 409:", result);
+            }
+            else {
+                const result = await response.json();
+                console.log('Успешно:', result);
+                window.location.href = "/login";
+            }
+        }
+        catch (error) {
+            // Выдачи ошибки
+            console.error('Ошибка:', error);
+        }
+    }
+
+    document.getElementById("btnDel").addEventListener("click", deleteAcc)
+</script>
+
 {% endblock %}

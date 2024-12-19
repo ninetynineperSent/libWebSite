@@ -59,7 +59,7 @@ def book_details(book_id):
 
 
 @app.route("/img_book/<int:book_id>")
-def get_image(book_id):
+def get_image_book(book_id):
     book = Books.query.get_or_404(book_id)
     if book.image:
         return send_file(
@@ -108,7 +108,15 @@ def addbook_response():
             age_limit=age_limit,
             image=image,
         )
-
+        # book = Books.query.get_or_404(5)
+        # db.session.delete(book)
+        # book = Books.query.get_or_404(6)
+        # db.session.delete(book)
+        # book = Books.query.get_or_404(7)
+        # db.session.delete(book)
+        # book = Books.query.get_or_404(8)
+        # db.session.delete(book)
+        # db.session.commit()
         db.session.add(new_book)
         db.session.commit()
 
@@ -139,10 +147,51 @@ def home():
         return redirect("/login")
 
 
-@app.route("/profile")
+@app.get("/profile")
 def profile():
     user_name = session.get("user_name")
-    return render_template("profile.html", user_name=user_name)
+    user_email = session.get("user_email")
+    user_number = session.get("user_number")
+    user_telegramm = session.get("user_telegramm")
+    user_pass = session.get("user_pass")
+
+    return render_template(
+        "profile.html",
+        user_name=user_name,
+        user_email=user_email,
+        user_number=user_number,
+        user_telegramm=user_telegramm,
+        user_pass=user_pass,
+    )
+
+
+@app.delete("/profile")
+def profile_response():
+    try:
+        user_email = session.get("user_email")
+        existing_user = User.query.filter_by(email=user_email).first()
+        print(-1)
+        if existing_user:
+            print(0)
+            db.session.delete(existing_user)
+            print(1)
+            db.session.commit()
+            print(2)
+            session.clear()
+            print(3)
+            return jsonify({"message": f"Аккаунт {user_email}, успешно удален!"}), 200
+        else:
+            print(4)
+            return (
+                jsonify(
+                    {
+                        "message": f"Полльзователя {user_email} не существует или вы не вошли в аккаунт"
+                    }
+                ),
+                409,
+            )
+    except Exception as e:
+        return jsonify({"message": f"Ошибка: {str(e)}"}), 500
 
 
 # Создание страничку регистрации
@@ -227,6 +276,9 @@ def login_response():
                 session["user_id"] = existing_user.id
                 session["user_name"] = existing_user.name
                 session["user_email"] = existing_user.email
+                session["user_number"] = existing_user.number
+                session["user_telegramm"] = existing_user.telegramm_connect
+                session["user_pass"] = existing_user.password
 
                 return (
                     jsonify(
