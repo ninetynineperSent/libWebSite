@@ -132,9 +132,9 @@
         </div>
 
         <button type="submit">Сохранить изменения</button>
-    </form>
-    <form class="profilee-form">
-        <button style="background-color: rgb(209, 73, 73); color: white;" id="btnDel">
+
+
+        <button type="button" style="background-color: rgb(209, 73, 73); color: white;" id="btnDel">
             Удалить аккаунт
         </button>
     </form>
@@ -164,8 +164,17 @@
             console.error('Ошибка:', error);
         }
     }
+    async function btnClick() {
+        const deleteAccConfirmed = confirm("Вы уверены, что хотите удалить аккаунт?");
 
-    document.getElementById("btnDel").addEventListener("click", deleteAcc)
+        if (deleteAccConfirmed) {
+            deleteAcc();
+        }
+        else {
+            console.log("Удаление отменено");
+        }
+    }
+    document.getElementById("btnDel").addEventListener("click", btnClick)
 </script>
 
 {% endblock %}

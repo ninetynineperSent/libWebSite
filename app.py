@@ -182,6 +182,7 @@ def profile_response():
             return jsonify({"message": f"Аккаунт {user_email}, успешно удален!"}), 200
         else:
             print(4)
+            session.clear()
             return (
                 jsonify(
                     {
