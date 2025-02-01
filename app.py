@@ -40,7 +40,6 @@ class Books(db.Model):
     age_limit = db.Column(db.Integer, nullable=False)
     image = db.Column(db.String(100), nullable=True)
 
-
 # Создаем объект базы данных
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -49,6 +48,15 @@ class User(db.Model):
     number = db.Column(db.String(12), nullable=False, unique=True)
     telegramm_connect = db.Column(db.String(50), nullable=False)
     password = db.Column(db.String(100), nullable=False)
+
+
+class BookOrder(db.Model):
+    id_order = db.Column(db.Integer, primary_key=True)
+    id_user = db.Column(db.Integer,nullable=False)
+    id_book = db.Column(db.Integer,nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    date_return = db.Column(db.Datetime)
+    date_book = db.Column(db.Datetime)
 
 
 @app.route("/book_detail/<int:book_id>")

@@ -55,6 +55,76 @@
         line-height: 1.5;
         margin-top: 20px;
     }
+    .button-container {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    .action-button {
+        background-color: #B08968;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    .action-button:hover {
+        background-color: #DDB892;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background-color: #E6CCB2;
+        padding: 20px;
+        border-radius: 10px;
+        width: 400px;
+        text-align: center;
+    }
+    .modal-content input {
+        width: 80%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .modal-content button {
+        margin-top: 10px;
+        background-color: #B08968;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    .modal-content button:hover {
+        background-color: #DDB892;
+    }
+    .close {
+        float: right;
+        cursor: pointer;
+        color: #aaa;
+    }
+    .close:hover {
+        color: black;
+    }
+    .cancel-button {
+        background-color: #d9534f;
+        margin-left: 10px;
+    }
+    .cancel-button:hover {
+        background-color: #c9302c;
+    }
 </style>
 
 <div class="book-container">
@@ -74,7 +144,64 @@
         <p class="book-info"><strong>Жанр:</strong> {{ book.genre }}</p>
         <p class="book-description"><strong>Описание:</strong></p>
         <p class="book-description">{{ book.description }}</p>
+        <div class="button-container">
+            <button class="action-button" id="borrow-button">Взять книгу</button>
+            <button class="action-button" id="reserve-button">Забронировать</button>
+        </div>
+    </div>
+</div>
+<div id="borrow-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="close-borrow">&times;</span>
+        <h3>Укажите количество дней</h3>
+        <input type="number" placeholder="Количество дней">
+        <button>Подтвердить</button>
+        <button class="cancel-button" id="cancel-borrow">Отмена</button>
+    </div>
+</div>
+<div id="reserve-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="close-reserve">&times;</span>
+        <h3>Укажите дату бронирования</h3>
+        <input type="date">
+        <button>Подтвердить</button>
+        <button class="cancel-button" id="cancel-reserve">Отмена</button>
     </div>
 </div>
 
+<script>
+    const borrowButton = document.getElementById('borrow-button');
+    const reserveButton = document.getElementById('reserve-button');
+    const borrowModal = document.getElementById('borrow-modal');
+    const reserveModal = document.getElementById('reserve-modal');
+    const closeBorrow = document.getElementById('close-borrow');
+    const closeReserve = document.getElementById('close-reserve');
+    const cancelBorrow = document.getElementById('cancel-borrow');
+    const cancelReserve = document.getElementById('cancel-reserve');
+    borrowButton.addEventListener('click', () => {
+        borrowModal.style.display = 'flex';
+    });
+    reserveButton.addEventListener('click', () => {
+        reserveModal.style.display = 'flex';
+    });
+    closeBorrow.addEventListener('click', () => {
+        borrowModal.style.display = 'none';
+    });
+    closeReserve.addEventListener('click', () => {
+        reserveModal.style.display = 'none';
+    });
+    cancelBorrow.addEventListener('click', () => {
+        borrowModal.style.display = 'none';
+    });
+    cancelReserve.addEventListener('click', () => {
+        reserveModal.style.display = 'none';
+    });
+    window.addEventListener('click', (event) => {
+        if (event.target === borrowModal) {
+            borrowModal.style.display = 'none';
+        } else if (event.target === reserveModal) {
+            reserveModal.style.display = 'none';
+        }
+    });
+</script>
 {% endblock %}
