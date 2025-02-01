@@ -11,10 +11,10 @@
         display: flex;
         justify-content: center;
         /* Центрирует содержимое по горизонтали */
-        align-items: center;
+        /* align-items: center; */
         /* Центрирует содержимое по вертикали */
         margin: 40px auto;
-        gap: 20px;
+        gap: 50px;
         /* Отступ между картинкой и текстом */
     }
 
@@ -59,14 +59,14 @@
 
 <div class="book-container">
     {% if book.image %}
-    <div>
+    <div style="margin-top: 4rem;">
         <img src="/img_book/{{ book.id }}" alt="{{ book.title }}" class="book-image">
         <p style="font-weight: 600; color: #767479; margin: 0; padding-top: 6px; font: 14px ALS Sirius;">
             Объем {{book.volume}} страниц · {{book.age_limit}}+
         </p>
     </div>
     {% endif %}
-    <div style="width: 600px;">
+    <div style="width: 800px;">
         <h1 class="book-title">{{ book.title }}</h1>
         <h2 class="book-author">Автор: {{ book.author }}</h2>
         <p class="book-info"><strong>Возрастное ограничение:</strong> {{ book.age_limit }}+</p>

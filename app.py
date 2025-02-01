@@ -153,7 +153,6 @@ def profile():
     user_email = session.get("user_email")
     user_number = session.get("user_number")
     user_telegramm = session.get("user_telegramm")
-    user_pass = session.get("user_pass")
 
     return render_template(
         "profile.html",
@@ -161,27 +160,63 @@ def profile():
         user_email=user_email,
         user_number=user_number,
         user_telegramm=user_telegramm,
-        user_pass=user_pass,
     )
 
 
+@app.post("/profile")
+def profile_respinse():
+    try:
+        data = request.get_json()  # Получаем JSON данные
+
+        name = data.get("name")
+        new_number = data.get("number")
+        telegramm_connect = data.get("telegramm_connect")
+
+        user_number = session.get("user_number")
+        # Если данных нет, выводим ошибку в консоль в браузере
+        if not data:
+            return jsonify({"message": "Нет данных"}), 400
+
+        possible_user = User.query.filter_by(number=new_number).first()
+        if not possible_user:
+            existing_user = User.query.filter_by(number=user_number).first()
+            existing_user.name = name
+            existing_user.number = new_number
+            existing_user.telegramm_connect = telegramm_connect
+
+            db.session.commit()
+
+            session["user_name"] = name
+            session["user_number"] = new_number
+            session["user_telegramm"] = telegramm_connect
+
+            return jsonify({"message": f"Данные изменены"}), 200
+        else:
+            return (
+                jsonify(
+                    {
+                        "message": f"С номером телефона {new_number}, пользователь уже есть"
+                    }
+                ),
+                409,
+            )
+    except Exception as e:
+        return jsonify({"message": f"Ошибка: {str(e)}"}), 500
+
+
 @app.delete("/profile")
-def profile_response():
+def profile_delete():
     try:
         user_email = session.get("user_email")
         existing_user = User.query.filter_by(email=user_email).first()
         print(-1)
         if existing_user:
-            print(0)
             db.session.delete(existing_user)
-            print(1)
             db.session.commit()
-            print(2)
             session.clear()
-            print(3)
             return jsonify({"message": f"Аккаунт {user_email}, успешно удален!"}), 200
+
         else:
-            print(4)
             session.clear()
             return (
                 jsonify(
@@ -211,7 +246,7 @@ def register_response():
         email = data.get("email")
         number = data.get("number")
         telegramm_connect = data.get("telegramm_connect")
-        password = data.get("password")
+        password = generate_password_hash(data.get("password"))
 
         # Если данных нет, выводим ошибку в консоль в браузере
         if not data:
@@ -273,13 +308,12 @@ def login_response():
         existing_user = User.query.filter_by(email=email).first()
 
         if existing_user:
-            if existing_user.password == password:
+            if check_password_hash(existing_user.password, password):
                 session["user_id"] = existing_user.id
                 session["user_name"] = existing_user.name
                 session["user_email"] = existing_user.email
                 session["user_number"] = existing_user.number
                 session["user_telegramm"] = existing_user.telegramm_connect
-                session["user_pass"] = existing_user.password
 
                 return (
                     jsonify(
@@ -303,4 +337,4 @@ def login_response():
 
 # Загрузка
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
