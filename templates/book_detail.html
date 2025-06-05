@@ -55,11 +55,13 @@
         line-height: 1.5;
         margin-top: 20px;
     }
+
     .button-container {
         margin-top: 20px;
         display: flex;
         gap: 10px;
     }
+
     .action-button {
         background-color: #B08968;
         color: white;
@@ -69,9 +71,11 @@
         font-size: 16px;
         cursor: pointer;
     }
+
     .action-button:hover {
         background-color: #DDB892;
     }
+
     .modal {
         display: none;
         position: fixed;
@@ -83,6 +87,7 @@
         justify-content: center;
         align-items: center;
     }
+
     .modal-content {
         background-color: #E6CCB2;
         padding: 20px;
@@ -90,6 +95,7 @@
         width: 400px;
         text-align: center;
     }
+
     .modal-content input {
         width: 80%;
         padding: 10px;
@@ -97,6 +103,7 @@
         border: 1px solid #ccc;
         border-radius: 5px;
     }
+
     .modal-content button {
         margin-top: 10px;
         background-color: #B08968;
@@ -107,21 +114,26 @@
         font-size: 16px;
         cursor: pointer;
     }
+
     .modal-content button:hover {
         background-color: #DDB892;
     }
+
     .close {
         float: right;
         cursor: pointer;
         color: #aaa;
     }
+
     .close:hover {
         color: black;
     }
+
     .cancel-button {
         background-color: #d9534f;
         margin-left: 10px;
     }
+
     .cancel-button:hover {
         background-color: #c9302c;
     }
@@ -131,7 +143,8 @@
     {% if book.image %}
     <div style="margin-top: 4rem;">
         <img src="/img_book/{{ book.id }}" alt="{{ book.title }}" class="book-image">
-        <p style="font-weight: 600; color: #767479; margin: 0; padding-top: 6px; font: 14px ALS Sirius;">
+        <p
+            style="font-weight: 600; color: #767479; margin: 0; padding-top: 6px; font: 500 14px/20px ALS Sirius, Arial, Helvetica Neue, Helvetica, sans-serif;">
             Объем {{book.volume}} страниц · {{book.age_limit}}+
         </p>
     </div>
@@ -170,6 +183,7 @@
 </div>
 
 <script>
+
     const borrowButton = document.getElementById('borrow-button');
     const reserveButton = document.getElementById('reserve-button');
     const borrowModal = document.getElementById('borrow-modal');
@@ -203,5 +217,27 @@
             reserveModal.style.display = 'none';
         }
     });
+
+
+    document.querySelector('#reserve-modal .modal-content button').onclick = async function () {
+        const dateInput = document.querySelector('#reserve-modal input[type="date"]');
+        const reserveDate = dateInput.value;
+        if (!reserveDate) {
+            alert("Укажите дату бронирования!");
+            return;
+        }
+        const bookId = "{{ book.id }}";
+        const response = await fetch('/reserve_book', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ book_id: bookId, date_booked_until: reserveDate })
+        });
+        const result = await response.json();
+        alert(result.message);
+        if (response.status === 200) {
+            window.location.href = "/mybooks";
+        }
+    };
+
 </script>
 {% endblock %}

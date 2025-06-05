@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Мои книги
+{% endblock %}
+
+{% block body %}
+
+<style>
+    .order-list-container {
+        margin-top: 24px;
+        /* большой отступ сверху от header (если надо больше — увеличь) */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        /* все карточки по центру */
+        min-height: 60vh;
+    }
+
+    .order-card {
+        display: flex;
+        align-items: center;
+        background: #E6CCB2;
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(176, 137, 104, 0.05);
+        gap: 18px;
+        max-width: 650px;
+        /* ограничиваем ширину */
+        width: 100%;
+        min-width: 320px;
+    }
+
+    .order-book-img {
+
+        width: 120px;
+        object-fit: cover;
+        border-radius: 4px;
+        flex-shrink: 0;
+        background: #EDE0D4;
+        border: 1px solid #e1cbb2;
+    }
+
+    .order-info-block {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .order-card .action-button,
+    .order-card button {
+        margin-right: 8px;
+        margin-top: 6px;
+        background-color: #B08968;
+        color: rgb(0, 0, 0);
+        padding: 7px 18px;
+        border: none;
+        border-radius: 5px;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    .order-card .action-button:hover,
+    .order-card button:hover {
+        background-color: #DDB892;
+    }
+
+    /* чтобы не было прилипания к бокам на мобиле */
+    @media (max-width: 800px) {
+        .order-card {
+            padding: 12px 8px;
+            max-width: 98vw;
+        }
+    }
+</style>
+
+<div class="order-list-container">
+    {% for order in orders %}
+    <div class="order-card">
+        <img src="{{ order.book_image_url }}" alt="Обложка" class="order-book-img">
+        <div class="order-info-block">
+            <div><b class="book-title">{{ order.book_title }}</b></div>
+            {% if order.status == 'reserved' %}
+            <div>Статус: <b style="color:#eca500">Забронирована</b></div>
+            <div>Бронь держится до: {{ order.date_booked_until.strftime('%d.%m.%Y') }}</div>
+            <div>
+                <button onclick="borrowBook({{ order.id_order }})">Подтвердить получение</button>
+                <button style="background-color: rgb(209, 73, 73); color: white;"
+                    onclick="cancelReservation({{ order.id_order }})">Отменить бронь</button>
+            </div>
+            {% elif order.status == 'borrowed' %}
+            <div>Статус: <b style="color:#b30f0f">Выдана</b></div>
+            <div>Взята: {{ order.date_borrowed.strftime('%d.%m.%Y') }}</div>
+            <div>Вернуть до: {{ order.date_due.strftime('%d.%m.%Y') }}</div>
+            <div>
+                <button onclick="returnBook({{ order.id_order }})">Вернуть книгу</button>
+            </div>
+            {% elif order.status == 'returned' %}
+            <div>Статус: <b style="color:#40d735">Возвращена</b></div>
+            <div>Возвращена: {{ order.date_returned.strftime('%d.%m.%Y') }}</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    // Взять книгу
+    function borrowBook(orderId) {
+        let days = prompt("На сколько дней хотите взять книгу? (по умолчанию 14)", "14");
+        if (!days) days = 14;
+        fetch('/borrow_book', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId, days: days })
+        })
+            .then(resp => resp.json())
+            .then(result => { alert(result.message); window.location.reload(); });
+    }
+    // Вернуть книгу
+    function returnBook(orderId) {
+        if (!confirm('Точно вернуть книгу?')) return;
+        fetch('/return_book', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId })
+        })
+            .then(resp => resp.json())
+            .then(result => { alert(result.message); window.location.reload(); });
+    }
+    // Отменить бронь
+    function cancelReservation(orderId) {
+        if (!confirm('Точно отменить бронь?')) return;
+        fetch('/cancel_reservation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId })
+        })
+            .then(resp => resp.json())
+            .then(result => { alert(result.message); window.location.reload(); });
+    }
+</script>
+
+{% endblock %}

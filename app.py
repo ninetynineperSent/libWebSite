@@ -10,7 +10,7 @@ from flask import (
     send_file,
 )
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 import base64
@@ -40,6 +40,7 @@ class Books(db.Model):
     age_limit = db.Column(db.Integer, nullable=False)
     image = db.Column(db.String(100), nullable=True)
 
+
 # Создаем объект базы данных
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -52,11 +53,14 @@ class User(db.Model):
 
 class BookOrder(db.Model):
     id_order = db.Column(db.Integer, primary_key=True)
-    id_user = db.Column(db.Integer,nullable=False)
-    id_book = db.Column(db.Integer,nullable=False)
-    status = db.Column(db.String(50), nullable=False)
-    date_return = db.Column(db.Datetime)
-    date_book = db.Column(db.Datetime)
+    id_user = db.Column(db.Integer, nullable=False)
+    id_book = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(50), nullable=False, default='reserved')
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)  # когда создана бронь
+    date_booked_until = db.Column(db.DateTime, nullable=False)  # до какого дня держат бронь
+    date_borrowed = db.Column(db.DateTime, nullable=True)  # когда выдали
+    date_due = db.Column(db.DateTime, nullable=True)  # до какого числа вернуть
+    date_returned = db.Column(db.DateTime, nullable=True)  # когда вернул
 
 
 @app.route("/book_detail/<int:book_id>")
@@ -201,11 +205,7 @@ def profile_respinse():
             return jsonify({"message": f"Данные изменены"}), 200
         else:
             return (
-                jsonify(
-                    {
-                        "message": f"С номером телефона {new_number}, пользователь уже есть"
-                    }
-                ),
+                jsonify({"message": f"С номером телефона {new_number}, пользователь уже есть"}),
                 409,
             )
     except Exception as e:
@@ -227,11 +227,7 @@ def profile_delete():
         else:
             session.clear()
             return (
-                jsonify(
-                    {
-                        "message": f"Полльзователя {user_email} не существует или вы не вошли в аккаунт"
-                    }
-                ),
+                jsonify({"message": f"Полльзователя {user_email} не существует или вы не вошли в аккаунт"}),
                 409,
             )
     except Exception as e:
@@ -261,9 +257,7 @@ def register_response():
             return jsonify({"message": "Нет данных"}), 400
 
         # Проверяем есть ли такой пользователь уже в БД
-        existing_user = User.query.filter(
-            (User.email == email) | (User.number == number)
-        ).first()
+        existing_user = User.query.filter((User.email == email) | (User.number == number)).first()
 
         # Если такой пользователь уже есть, то выводим ошибку
         if existing_user:
@@ -283,11 +277,7 @@ def register_response():
         db.session.commit()
         # Возвращаем хороший протокол
         return (
-            jsonify(
-                {
-                    "message": f"Пользователь добавлен в БД email: (EMAIL: {email} PASSWORD: {password})"
-                }
-            ),
+            jsonify({"message": f"Пользователь добавлен в БД email: (EMAIL: {email} PASSWORD: {password})"}),
             200,
         )
     # В противном случае возвращаем любую другую ошибку
@@ -324,11 +314,7 @@ def login_response():
                 session["user_telegramm"] = existing_user.telegramm_connect
 
                 return (
-                    jsonify(
-                        {
-                            "message": f"Вы успешно вошли в аккаунт {email}. Добро пожаловать, {existing_user.name}!"
-                        }
-                    ),
+                    jsonify({"message": f"Вы успешно вошли в аккаунт {email}. Добро пожаловать, {existing_user.name}!"}),
                     200,
                 )
             else:
@@ -341,6 +327,117 @@ def login_response():
 
     except Exception as e:
         return jsonify({"message": f"Ошибка: {str(e)}"}), 500
+
+
+@app.get("/about")
+def about():
+    user_name = session.get("user_name")
+
+    if user_name:
+        # Получение всех книг из базы данных
+        return render_template("about.html", user_name=user_name)
+    else:
+        # Перенаправляем на страницу входа, если пользователь не авторизован
+        return redirect("/login")
+
+
+@app.get("/mybooks")
+def mybooks():
+    user_name = session.get("user_name")
+    user_id = session.get("user_id")
+    if not user_name:
+        return redirect("/login")
+    # Получаем все заказы этого пользователя, JOIN-ом подтягиваем книги
+    orders = BookOrder.query.filter_by(id_user=user_id).order_by(BookOrder.date_created.desc()).all()
+
+    # Чтобы подтянуть объект книги:
+    for order in orders:
+        book = Books.query.get(order.id_book)
+        order.book_title = book.title
+        order.book_image_url = f"/img_book/{book.id}"
+        order.book = Books.query.get(order.id_book)
+        # print(order.book)
+    return render_template("mybooks.html", user_name=user_name, orders=orders)
+
+
+# 1. Забронировать книгу (reserve)
+@app.route('/reserve_book', methods=['POST'])
+def reserve_book():
+    if not session.get('user_id'):
+        return jsonify({'message': 'Авторизуйтесь!'}), 401
+    data = request.get_json()
+    book_id = data.get('book_id')
+    date_until = data.get('date_booked_until')  # строка: '2024-06-12'
+    try:
+        user_id = session['user_id']
+        existing = BookOrder.query.filter_by(id_user=user_id, id_book=book_id, status='reserved').first()
+        if existing:
+            return jsonify({'message': 'Эта книга уже забронирована вами!'}), 409
+        new_order = BookOrder(id_user=user_id, id_book=book_id, status='reserved', date_booked_until=datetime.strptime(date_until, '%Y-%m-%d'))
+        db.session.add(new_order)
+        db.session.commit()
+        return jsonify({'message': 'Книга забронирована до ' + date_until}), 200
+    except Exception as e:
+        return jsonify({'message': 'Ошибка: ' + str(e)}), 500
+
+
+# 2. Взять книгу (borrow)
+@app.route('/borrow_book', methods=['POST'])
+def borrow_book():
+    if not session.get('user_id'):
+        return jsonify({'message': 'Авторизуйтесь!'}), 401
+    data = request.get_json()
+    order_id = data.get('order_id')  # ID бронирования
+    days = int(data.get('days', 14))  # Сколько дней брать (по умолчанию 14)
+    try:
+        order = BookOrder.query.filter_by(id_order=order_id, id_user=session['user_id'], status='reserved').first()
+        if not order:
+            return jsonify({'message': 'Бронь не найдена или уже выдана!'}), 404
+        now = datetime.utcnow()
+        order.status = 'borrowed'
+        order.date_borrowed = now
+        order.date_due = now + timedelta(days=days)
+        db.session.commit()
+        return jsonify({'message': f'Книга выдана до {order.date_due.strftime("%Y-%m-%d")}'}), 200
+    except Exception as e:
+        return jsonify({'message': 'Ошибка: ' + str(e)}), 500
+
+
+# 3. Вернуть книгу (return)
+@app.route('/return_book', methods=['POST'])
+def return_book():
+    if not session.get('user_id'):
+        return jsonify({'message': 'Авторизуйтесь!'}), 401
+    data = request.get_json()
+    order_id = data.get('order_id')  # ID заказа
+    try:
+        order = BookOrder.query.filter_by(id_order=order_id, id_user=session['user_id'], status='borrowed').first()
+        if not order:
+            return jsonify({'message': 'Книга не была выдана или уже возвращена!'}), 404
+        order.status = 'returned'
+        order.date_returned = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'message': 'Книга успешно возвращена!'}), 200
+    except Exception as e:
+        return jsonify({'message': 'Ошибка: ' + str(e)}), 500
+
+
+# 4. (Опционально) Отменить бронь (cancel)
+@app.route('/cancel_reservation', methods=['POST'])
+def cancel_reservation():
+    if not session.get('user_id'):
+        return jsonify({'message': 'Авторизуйтесь!'}), 401
+    data = request.get_json()
+    order_id = data.get('order_id')
+    try:
+        order = BookOrder.query.filter_by(id_order=order_id, id_user=session['user_id'], status='reserved').first()
+        if not order:
+            return jsonify({'message': 'Бронь не найдена!'}), 404
+        db.session.delete(order)
+        db.session.commit()
+        return jsonify({'message': 'Бронь отменена!'}), 200
+    except Exception as e:
+        return jsonify({'message': 'Ошибка: ' + str(e)}), 500
 
 
 # Загрузка
