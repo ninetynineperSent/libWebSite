@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Уведомления для администратора{% endblock %}
+{% block body %}
+<h2 style="margin-left: 35px;">Уведомления</h2>
+<div style="margin-left: 20px;">
+    {% for order in orders %}
+    {% if order.status == 'reserved' and order.confirm_code %}
+    <div style="background:#E6CCB2;padding:16px;margin-bottom:16px;border-radius:10px;max-width:500px;">
+        <b>{{ order.book_title }}</b>
+        <br>Пользователь: {{ order.user_name }}<br>
+        <div>Бронь держится до: {{ order.date_booked_until.strftime('%d.%m.%Y') }}</div>
+        <span style="color:#b08968;">Разовый код выдачи: <b>{{ order.confirm_code }}</b></span><br>
+    </div>
+    {% endif %}
+    {% if order.status == 'confirm_returned' %}
+    <div style="background:#E6CCB2;padding:16px;margin-bottom:16px;border-radius:10px;max-width:500px;">
+        <b>{{ order.book_title }}</b>
+        <br>Пользователь: {{ order.user_name }}<br>
+        <span style="color:#ca0c0c;">Ожидает подтверждения возврата</span><br>
+        <button onclick="approveReturn({{ order.id_order }})">Подтвердить возврат</button>
+        <button onclick="rejectReturn({{ order.id_order }})" style="background:#d9534f; color:white;">Отклонить</button>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+<script>
+    function approveReturn(orderId) {
+        fetch('/admin/approve_return', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId })
+        })
+            .then(resp => resp.json())
+            .then(result => { alert(result.message); window.location.reload(); });
+    }
+    function rejectReturn(orderId) {
+        fetch('/admin/reject_return', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId })
+        })
+            .then(resp => resp.json())
+            .then(result => { alert(result.message); window.location.reload(); });
+    }
+</script>
+{% endblock %}

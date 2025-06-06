@@ -89,6 +89,7 @@
                 <button style="background-color: rgb(209, 73, 73); color: white;"
                     onclick="cancelReservation({{ order.id_order }})">Отменить бронь</button>
             </div>
+
             {% elif order.status == 'borrowed' %}
             <div>Статус: <b style="color:#b30f0f">Выдана</b></div>
             <div>Взята: {{ order.date_borrowed.strftime('%d.%m.%Y') }}</div>
@@ -96,6 +97,13 @@
             <div>
                 <button onclick="returnBook({{ order.id_order }})">Вернуть книгу</button>
             </div>
+
+            {% elif order.status == 'confirm_returned' %}
+            <div>Статус: <b style="color:#eca500">Ожидает проверки</b></div>
+            <div>Взята: {{ order.date_borrowed.strftime('%d.%m.%Y') }}</div>
+            <div>Вернуть до: {{ order.date_due.strftime('%d.%m.%Y') }}</div>
+
+
             {% elif order.status == 'returned' %}
             <div>Статус: <b style="color:#40d735">Возвращена</b></div>
             <div>Возвращена: {{ order.date_returned.strftime('%d.%m.%Y') }}</div>
@@ -103,21 +111,89 @@
         </div>
     </div>
     {% endfor %}
+    <div id="confirm-code-modal"
+        style="display:none; position:fixed; z-index:10000; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.45); justify-content:center; align-items:center;">
+        <div
+            style="background:#fff8ee; padding:10px; border-radius:12px; min-width:320px; box-shadow:0 2px 12px #b0896833; display:flex; flex-direction:column; align-items:center;">
+            <span id="close-confirm-modal"
+                style="align-self: flex-end; cursor:pointer; font-size:22px; color:#b08968;">&times;</span>
+            <h3 style="margin-bottom:18px;">Введите код подтверждения</h3>
+            <input id="confirm-code-input" type="text" maxlength="16" placeholder="Код, который дал админ"
+                style="font-size:16px; padding:9px 12px; border-radius:7px; border:1px solid #ddb892; margin-bottom:18px; width:85%;">
+            <button id="send-confirm-code"
+                style="background:#b08968; color:#fff; font-size:16px; border:none; border-radius:6px; padding:9px 22px; cursor:pointer;">Подтвердить</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    // Взять книгу
+    let selectedOrderId = null;
+    let selectedDays = 14; // По умолчанию
+
     function borrowBook(orderId) {
-        let days = prompt("На сколько дней хотите взять книгу? (по умолчанию 14)", "14");
-        if (!days) days = 14;
+        // 1. Сначала спрашиваем количество дней
+        let days = prompt("На сколько дней хотите взять книгу? (максимум 14)", "14");
+        if (!days) return; // Если отменили
+        days = parseInt(days);
+        if (isNaN(days) || days < 1 || days > 14) {
+            alert("Введите число от 1 до 14!");
+            return;
+        }
+        selectedOrderId = orderId;
+        selectedDays = days;
+        // 2. Генерируем одноразовый код (код сохраняется в базе)
+        fetch('/api/generate_code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: selectedOrderId })
+        })
+            .then(resp => resp.json())
+            .then(result => {
+                if (result.success) {
+                    // 3. После генерации открываем модалку для ввода кода
+                    document.getElementById('confirm-code-input').value = '';
+                    document.getElementById('confirm-code-modal').style.display = 'flex';
+                } else {
+                    alert(result.message || 'Ошибка при генерации кода');
+                }
+            });
+    }
+
+    document.getElementById('close-confirm-modal').onclick = function () {
+        document.getElementById('confirm-code-modal').style.display = 'none';
+        // Сбросить код на сервере!
+        if (selectedOrderId) {
+            fetch('/api/reset_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: selectedOrderId })
+            });
+        }
+        selectedOrderId = null;
+        selectedDays = 14;
+    };
+
+    document.getElementById('send-confirm-code').onclick = async function () {
+        const code = document.getElementById('confirm-code-input').value.trim();
+        if (!code) {
+            alert("Введите код, который вам дал админ!");
+            return;
+        }
         fetch('/borrow_book', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order_id: orderId, days: days })
+            body: JSON.stringify({ order_id: selectedOrderId, days: selectedDays, code: code })
         })
-            .then(resp => resp.json())
-            .then(result => { alert(result.message); window.location.reload(); });
-    }
+            .then(async resp => {
+                const result = await resp.json();
+                alert(result.message);
+                document.getElementById('confirm-code-modal').style.display = 'none';
+                selectedOrderId = null;
+                selectedDays = 14;
+                if (resp.status === 200) window.location.reload();
+            });
+    };
+
     // Вернуть книгу
     function returnBook(orderId) {
         if (!confirm('Точно вернуть книгу?')) return;
@@ -129,6 +205,7 @@
             .then(resp => resp.json())
             .then(result => { alert(result.message); window.location.reload(); });
     }
+
     // Отменить бронь
     function cancelReservation(orderId) {
         if (!confirm('Точно отменить бронь?')) return;
@@ -140,6 +217,7 @@
             .then(resp => resp.json())
             .then(result => { alert(result.message); window.location.reload(); });
     }
+
 </script>
 
 {% endblock %}

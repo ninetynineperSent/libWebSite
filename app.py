@@ -15,6 +15,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 import base64
 import io
+import random
 
 # Случайный 32-символьный ключ
 SECRET_KEY = secrets.token_hex(16)
@@ -27,6 +28,10 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///base.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Создание базы дынных
 db = SQLAlchemy(app)
+
+
+def generate_code(length=6):
+    return ''.join(random.choices('0123456789', k=length))
 
 
 # Создание класса в базе данных
@@ -49,6 +54,7 @@ class User(db.Model):
     number = db.Column(db.String(12), nullable=False, unique=True)
     telegramm_connect = db.Column(db.String(50), nullable=False)
     password = db.Column(db.String(100), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
 
 
 class BookOrder(db.Model):
@@ -61,6 +67,7 @@ class BookOrder(db.Model):
     date_borrowed = db.Column(db.DateTime, nullable=True)  # когда выдали
     date_due = db.Column(db.DateTime, nullable=True)  # до какого числа вернуть
     date_returned = db.Column(db.DateTime, nullable=True)  # когда вернул
+    confirm_code = db.Column(db.String(16), nullable=True)  # поле для одноразового кода
 
 
 @app.route("/book_detail/<int:book_id>")
@@ -85,6 +92,8 @@ def get_image_book(book_id):
 
 @app.get("/addbook")
 def addbook():
+    if not session.get("is_admin"):
+        return redirect("/home")  # Только для админов!
     user_name = session.get("user_name")
     return render_template("addbook.html", user_name=user_name)
 
@@ -312,6 +321,7 @@ def login_response():
                 session["user_email"] = existing_user.email
                 session["user_number"] = existing_user.number
                 session["user_telegramm"] = existing_user.telegramm_connect
+                session['is_admin'] = existing_user.is_admin
 
                 return (
                     jsonify({"message": f"Вы успешно вошли в аккаунт {email}. Добро пожаловать, {existing_user.name}!"}),
@@ -387,12 +397,19 @@ def borrow_book():
     if not session.get('user_id'):
         return jsonify({'message': 'Авторизуйтесь!'}), 401
     data = request.get_json()
-    order_id = data.get('order_id')  # ID бронирования
-    days = int(data.get('days', 14))  # Сколько дней брать (по умолчанию 14)
+    order_id = data.get('order_id')
+    days = int(data.get('days', 14))
+    user_code = data.get('code')
+
     try:
         order = BookOrder.query.filter_by(id_order=order_id, id_user=session['user_id'], status='reserved').first()
         if not order:
             return jsonify({'message': 'Бронь не найдена или уже выдана!'}), 404
+
+        # Проверяем введённый пользователем код
+        if user_code != order.confirm_code:
+            return jsonify({'message': 'Неверный код подтверждения!'}), 403
+
         now = datetime.utcnow()
         order.status = 'borrowed'
         order.date_borrowed = now
@@ -414,10 +431,9 @@ def return_book():
         order = BookOrder.query.filter_by(id_order=order_id, id_user=session['user_id'], status='borrowed').first()
         if not order:
             return jsonify({'message': 'Книга не была выдана или уже возвращена!'}), 404
-        order.status = 'returned'
-        order.date_returned = datetime.utcnow()
+        order.status = 'confirm_returned'  # <--- Меняем статус на confirm_returned!
         db.session.commit()
-        return jsonify({'message': 'Книга успешно возвращена!'}), 200
+        return jsonify({'message': 'Запрос на возврат отправлен админу!'}), 200
     except Exception as e:
         return jsonify({'message': 'Ошибка: ' + str(e)}), 500
 
@@ -438,6 +454,79 @@ def cancel_reservation():
         return jsonify({'message': 'Бронь отменена!'}), 200
     except Exception as e:
         return jsonify({'message': 'Ошибка: ' + str(e)}), 500
+
+
+@app.route('/admin/notifications')
+def admin_notifications():
+    if not session.get("is_admin"):
+        return redirect("/home")  # Только для админов!
+    # Показываем заказы, где нужно действие админа (пример: confirm_returned или ожидают кода)
+    orders = BookOrder.query.filter(BookOrder.status.in_(['confirm_returned', 'reserved'])).order_by(BookOrder.date_due.desc()).all()
+    for order in orders:
+        user = User.query.get(order.id_user)
+        book = Books.query.get(order.id_book)
+        order.user_name = user.name if user else "Неизвестно"
+        order.book_title = book.title if book else "Без названия"
+    return render_template("admin_notifications.html", orders=orders)
+
+
+@app.route('/admin/approve_return', methods=['POST'])
+def admin_approve_return():
+    if not session.get("is_admin"):
+        return jsonify({'message': 'Доступ только для админа!'}), 403
+    data = request.get_json()
+    order_id = data.get('order_id')
+    order = BookOrder.query.get(order_id)
+    if not order or order.status != 'confirm_returned':
+        return jsonify({'message': 'Неверный статус заказа!'}), 400
+    order.status = 'returned'
+    order.date_returned = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'message': 'Возврат подтвержден!'}), 200
+
+
+@app.route('/admin/reject_return', methods=['POST'])
+def admin_reject_return():
+    if not session.get("is_admin"):
+        return jsonify({'message': 'Доступ только для админа!'}), 403
+    data = request.get_json()
+    order_id = data.get('order_id')
+    order = BookOrder.query.get(order_id)
+    if not order or order.status != 'confirm_returned':
+        return jsonify({'message': 'Неверный статус заказа!'}), 400
+    order.status = 'borrowed'
+    db.session.commit()
+    return jsonify({'message': 'Запрос на возврат отклонён!'}), 200
+
+
+@app.route('/api/generate_code', methods=['POST'])
+def api_generate_code():
+    if not session.get('user_id'):
+        return jsonify({'message': 'Авторизуйтесь!'}), 401
+    data = request.get_json()
+    order_id = data.get('order_id')
+    order = BookOrder.query.filter_by(id_order=order_id, id_user=session['user_id'], status='reserved').first()
+    if not order:
+        return jsonify({'message': 'Бронь не найдена!'}), 404
+    code = generate_code()
+    order.confirm_code = code
+    db.session.commit()
+    # Код увидит только админ!
+    return jsonify({'success': True})
+
+
+@app.route('/api/reset_code', methods=['POST'])
+def api_reset_code():
+    if not session.get('user_id'):
+        return jsonify({'message': 'Авторизуйтесь!'}), 401
+    data = request.get_json()
+    order_id = data.get('order_id')
+    order = BookOrder.query.filter_by(id_order=order_id, id_user=session['user_id'], status='reserved').first()
+    if not order:
+        return jsonify({'message': 'Бронь не найдена!'}), 404
+    order.confirm_code = None
+    db.session.commit()
+    return jsonify({'success': True})
 
 
 # Загрузка
