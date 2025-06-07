@@ -283,7 +283,7 @@ def register_response():
         
 
         default_avatar = User.query.get_or_404(4).avatar
-        
+        print("test")
         # Объект базы данных
         user = User(
             name=name,
