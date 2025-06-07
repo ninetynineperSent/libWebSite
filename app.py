@@ -91,7 +91,7 @@ def get_image_book(book_id):
         return "", 404
 
 
-@app.get("/addbook")
+@app.get("/admin/addbook")
 def addbook():
     if not session.get("is_admin"):
         return redirect("/home")  # Только для админов!
@@ -99,7 +99,7 @@ def addbook():
     return render_template("addbook.html", user_name=user_name)
 
 
-@app.post("/addbook")
+@app.post("/admin/addbook")
 def addbook_response():
     try:
         data = request.get_json()
@@ -192,9 +192,10 @@ def profile_response():
         name = data.get("name")
         new_number = data.get("number")
         telegramm_connect = data.get("telegramm_connect")
+
         avatar_base64 = data.get("avatar")
 
-        avatar_binary = base64.b64decode(avatar_base64) if avatar_base64 else None
+        avatar = base64.b64decode(avatar_base64.split(",")[1]) if avatar_base64 else None
 
         user_id = session.get("user_id")
         if not user_id:
@@ -205,8 +206,8 @@ def profile_response():
             user.name = name
             user.number = new_number
             user.telegramm_connect = telegramm_connect
-            if avatar_binary:
-                user.avatar = avatar_binary
+            if avatar:
+                user.avatar = avatar
             db.session.commit()
 
             session["user_name"] = name
@@ -220,13 +221,11 @@ def profile_response():
         return jsonify({"message": f"Ошибка: {str(e)}"}), 500
 
 
-
-
 @app.route("/avatar/<int:user_id>")
 def get_avatar(user_id):
     user = User.query.get_or_404(user_id)
     if user.avatar:
-        return send_file(io.BytesIO(user.avatar), mimetype="image/jpeg")
+        return send_file(io.BytesIO(user.avatar), mimetype="image/jpeg", as_attachment=False)
     else:
         return "", 404
 
