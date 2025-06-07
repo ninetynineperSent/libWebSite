@@ -109,7 +109,7 @@
     <form class="profile-form" method="post">
 
         <div class="avatar-container">
-            <img src="" alt="Аватар пользователя">
+            <img id="avatar-img" src="/avatar/{{ session['user_id'] }}" alt="Аватар пользователя">
             <input type="file" id="avatar" name="avatar">
             <label for="avatar">Изменить аватар</label>
         </div>
@@ -173,66 +173,73 @@
         }
     }
 
-    async function sendData(data) {
-        try {
-            const response = await fetch('/profile', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json' // Для JSON данных
-                },
-                body: JSON.stringify(data)
-            });
-            if (response === 500) {
-                console.log("Ошибка сервера! Статус 500");
-            }
-            else if (response === 400) {
-                const result = await response.json();
-                console.log("Не успешно, ошибка в передачи данных, 400:", result);
-            }
-            else if (response === 409) {
-                const result = await response.json();
-                console.log("Не успешно, 409:", result);
-            }
-            else {
-                const result = await response.json(); // Парсим JSON ответ
-                console.log('Успешно:', result);
-                window.location.href = "/home";
-            }
+ async function sendData(data) {
+    try {
+        const response = await fetch('/profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const result = await response.json();
+            console.log("Ошибка:", result);
+        } else {
+            const result = await response.json();
+            console.log('Успешно:', result);
+            window.location.reload();
         }
-        catch (error) {
-            console.error('Ошибка:', error);
-        }
+    } catch (error) {
+        console.error('Ошибка:', error);
     }
+}
+
 
     function validatePhoneNumber(number) {
         const regex = /^\+?[7]([0-9]{10})$/;
         return regex.test(number);
     }
 
-    async function btnClickSave() {
-        const name = document.getElementById("name").value.trim();
-        const number = document.getElementById("number").value.trim();
-        const telegramm_connect = document.getElementById("telegramm_connect").value.trim();
+ async function btnClickSave() {
+    const name = document.getElementById("name").value.trim();
+    const number = document.getElementById("number").value.trim();
+    const telegramm_connect = document.getElementById("telegramm_connect").value.trim();
+    const avatarFile = document.getElementById("avatar").files[0];
 
-        is_valid = true;
+    let is_valid = true;
 
-        if (!validatePhoneNumber(number)) {
-            showError(document.getElementById("number"), "Некорректный номер телефона");
-            console.log("Некорректный номер телефона");
-            is_valid = false;
-        }
-        if (is_valid === true) {
-            // Создаем переменную со всеми данными
-            const myData = {
-                "name": name,
-                "number": number,
-                "telegramm_connect": telegramm_connect,
-            };
-            // Передаем все данные в функцию
-            console.log(myData);
-            sendData(myData);
-        }
+    if (!validatePhoneNumber(number)) {
+        showError(document.getElementById("number"), "Некорректный номер телефона");
+        console.log("Некорректный номер телефона");
+        is_valid = false;
     }
+
+    if (is_valid) {
+        let avatarBase64 = null;
+
+        if (avatarFile) {
+            avatarBase64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]); // только Base64-часть
+                reader.onerror = reject;
+                reader.readAsDataURL(avatarFile);
+            });
+        }
+
+        const data = {
+            name,
+            number,
+            telegramm_connect,
+            avatar: avatarBase64  // строка или null
+        };
+
+        sendData(data);
+    }
+}
+
+
 
     document.getElementById("btnDel").addEventListener("click", btnClickDel)
     document.getElementById("btnSave").addEventListener("click", btnClickSave)

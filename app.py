@@ -55,6 +55,7 @@ class User(db.Model):
     telegramm_connect = db.Column(db.String(50), nullable=False)
     password = db.Column(db.String(100), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    avatar = db.Column(db.LargeBinary, nullable=True)
 
 
 class BookOrder(db.Model):
@@ -185,40 +186,49 @@ def profile():
 
 
 @app.post("/profile")
-def profile_respinse():
+def profile_response():
     try:
-        data = request.get_json()  # Получаем JSON данные
-
+        data = request.get_json()
         name = data.get("name")
         new_number = data.get("number")
         telegramm_connect = data.get("telegramm_connect")
+        avatar_base64 = data.get("avatar")
 
-        user_number = session.get("user_number")
-        # Если данных нет, выводим ошибку в консоль в браузере
-        if not data:
-            return jsonify({"message": "Нет данных"}), 400
+        avatar_binary = base64.b64decode(avatar_base64) if avatar_base64 else None
 
-        possible_user = User.query.filter_by(number=new_number).first()
-        if not possible_user:
-            existing_user = User.query.filter_by(number=user_number).first()
-            existing_user.name = name
-            existing_user.number = new_number
-            existing_user.telegramm_connect = telegramm_connect
+        user_id = session.get("user_id")
+        if not user_id:
+            return jsonify({"message": "Неавторизован"}), 401
 
+        user = User.query.get(user_id)
+        if user:
+            user.name = name
+            user.number = new_number
+            user.telegramm_connect = telegramm_connect
+            if avatar_binary:
+                user.avatar = avatar_binary
             db.session.commit()
 
             session["user_name"] = name
             session["user_number"] = new_number
             session["user_telegramm"] = telegramm_connect
 
-            return jsonify({"message": f"Данные изменены"}), 200
+            return jsonify({"message": "Профиль обновлён"}), 200
         else:
-            return (
-                jsonify({"message": f"С номером телефона {new_number}, пользователь уже есть"}),
-                409,
-            )
+            return jsonify({"message": "Пользователь не найден"}), 404
     except Exception as e:
         return jsonify({"message": f"Ошибка: {str(e)}"}), 500
+
+
+
+
+@app.route("/avatar/<int:user_id>")
+def get_avatar(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.avatar:
+        return send_file(io.BytesIO(user.avatar), mimetype="image/jpeg")
+    else:
+        return "", 404
 
 
 @app.delete("/profile")
