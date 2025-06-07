@@ -280,7 +280,10 @@ def register_response():
         # Если такой пользователь уже есть, то выводим ошибку
         if existing_user:
             return jsonify({"message": "Такой пользователь уже есть в БД"}), 409
+        
 
+        default_avatar = User.query.get_or_404(4).avatar
+        
         # Объект базы данных
         user = User(
             name=name,
@@ -288,6 +291,7 @@ def register_response():
             number=number,
             telegramm_connect=telegramm_connect,
             password=password,
+            avatar=default_avatar,
         )
 
         # Пытаемся добавить статью в БД
