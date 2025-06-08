@@ -71,12 +71,14 @@
     background-color: #DDB892;
     border-radius: 50%;
   }
-  .avatar img{
+
+  .avatar img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
   }
+
   .search-input {
     min-width: 200px;
     width: 100%;
@@ -395,7 +397,7 @@
           <div class="search-section">
             <input type="text" id="searchInput" placeholder="Найти книгу..." class="search-input">
             <div class="">
-              <a href="#" id="searchLink" class="header-link">
+              <a href="#" id="searchButton" class="header-link">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 512 512">
                   <path
                     d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z">
@@ -427,7 +429,8 @@
           <div class="profile-section">
             <a href="/profile" id="profileLink" class="header-link3">
               <div class="avatar"><img id="avatar-img" src="/avatar/{{ session['user_id'] }}" alt=""></div>
-              <p style="margin: auto; padding-left: 0.5rem; padding-right: 2rem; font-size: 14px;">{{user_name}}</p>
+              <p style="margin: auto; padding-left: 0.5rem; padding-right: 2rem; font-size: 14px;">
+                {{session['user_name']}}</p>
             </a>
           </div>
 
@@ -577,6 +580,12 @@
       if (e.target === modal) {
         closeModal();
       }
+    });
+
+    document.getElementById("searchButton").addEventListener("click", function () {
+      let searchTerm = document.getElementById("searchInput").value.trim();
+      // Отправка запроса на сервер
+      window.location.href = `/search?query=${searchTerm}`;
     });
   </script>
 </body>

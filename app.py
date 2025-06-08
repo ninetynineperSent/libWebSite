@@ -75,7 +75,7 @@ class BookOrder(db.Model):
 def book_details(book_id):
     user_name = session.get("user_name")
     book = Books.query.get_or_404(book_id)
-    return render_template("book_detail.html", book=book, user_name=user_name)
+    return render_template("book_detail.html", book=book)
 
 
 @app.route("/img_book/<int:book_id>")
@@ -167,6 +167,18 @@ def home():
     else:
         # Перенаправляем на страницу входа, если пользователь не авторизован
         return redirect("/login")
+
+
+@app.route('/search')
+def search():
+    query = request.args.get('query')
+    if query:
+
+        books = Books.query.filter(Books.title.contains(query) | Books.author.contains(query) | Books.description.contains(query) | Books.genre.contains(query)).all()
+    else:
+        books = Books.query.all()
+    hi = 12
+    return render_template('search_results.html', books=books, query=query)
 
 
 @app.get("/profile")
@@ -280,9 +292,8 @@ def register_response():
         # Если такой пользователь уже есть, то выводим ошибку
         if existing_user:
             return jsonify({"message": "Такой пользователь уже есть в БД"}), 409
-        
 
-        default_avatar = User.query.get_or_404(4).avatar
+        default_avatar = User.query.get_or_404(1).avatar
         print("test")
         # Объект базы данных
         user = User(
