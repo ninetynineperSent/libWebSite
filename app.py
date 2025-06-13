@@ -177,7 +177,6 @@ def search():
         books = Books.query.filter(Books.title.contains(query) | Books.author.contains(query) | Books.description.contains(query) | Books.genre.contains(query)).all()
     else:
         books = Books.query.all()
-    hi = 12
     return render_template('search_results.html', books=books, query=query)
 
 
