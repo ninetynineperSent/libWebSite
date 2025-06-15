@@ -107,6 +107,14 @@
             {% elif order.status == 'returned' %}
             <div>Статус: <b style="color:#40d735">Возвращена</b></div>
             <div>Возвращена: {{ order.date_returned.strftime('%d.%m.%Y') }}</div>
+
+            {% elif order.status == 'overdue' %}
+            <div>Статус: <b style="color:#3f0202">Просрочено</b></div>
+            <div>Нужно было вернуть до: {{ order.date_due.strftime('%d.%m.%Y') }}</div>
+            <div>
+                <button onclick="returnBook({{ order.id_order }})">Вернуть книгу</button>
+            </div>
+
             {% endif %}
         </div>
     </div>
@@ -188,8 +196,19 @@
                 const result = await resp.json();
                 alert(result.message);
                 document.getElementById('confirm-code-modal').style.display = 'none';
+
+                if (resp.status !== 200 && selectedOrderId) {
+                    // Сбросить одноразовый код, если код неправильный
+                    await fetch('/api/reset_code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order_id: selectedOrderId })
+                    });
+                }
+
                 selectedOrderId = null;
                 selectedDays = 14;
+
                 if (resp.status === 200) window.location.reload();
             });
     };

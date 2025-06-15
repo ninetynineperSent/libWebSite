@@ -10,12 +10,8 @@
     .book-container {
         display: flex;
         justify-content: center;
-        /* Центрирует содержимое по горизонтали */
-        /* align-items: center; */
-        /* Центрирует содержимое по вертикали */
         margin: 40px auto;
         gap: 50px;
-        /* Отступ между картинкой и текстом */
     }
 
     .book-image {
@@ -23,15 +19,12 @@
         height: 400px;
         border-radius: 10px;
         flex-shrink: 0;
-        /* Запрещает сжиматься картинке */
     }
 
     .book-details {
         display: flex;
         flex-direction: column;
-        /* Располагает текстовые блоки вертикально */
         justify-content: center;
-        /* Центрирует текстовые блоки по вертикали */
     }
 
     .book-title {
@@ -145,7 +138,7 @@
         <img src="/img_book/{{ book.id }}" alt="{{ book.title }}" class="book-image">
         <p
             style="font-weight: 600; color: #767479; margin: 0; padding-top: 6px; font: 500 14px/20px ALS Sirius, Arial, Helvetica Neue, Helvetica, sans-serif;">
-            Объем {{book.volume}} страниц · {{book.age_limit}}+
+            Объем {{ book.volume }} страниц · {{ book.age_limit }}+
         </p>
     </div>
     {% endif %}
@@ -163,15 +156,7 @@
         </div>
     </div>
 </div>
-<div id="borrow-modal" class="modal">
-    <div class="modal-content">
-        <span class="close" id="close-borrow">&times;</span>
-        <h3>Укажите количество дней</h3>
-        <input type="number" placeholder="Количество дней">
-        <button>Подтвердить</button>
-        <button class="cancel-button" id="cancel-borrow">Отмена</button>
-    </div>
-</div>
+
 <div id="reserve-modal" class="modal">
     <div class="modal-content">
         <span class="close" id="close-reserve">&times;</span>
@@ -183,42 +168,52 @@
 </div>
 
 <script>
-
     const borrowButton = document.getElementById('borrow-button');
     const reserveButton = document.getElementById('reserve-button');
-    const borrowModal = document.getElementById('borrow-modal');
     const reserveModal = document.getElementById('reserve-modal');
-    const closeBorrow = document.getElementById('close-borrow');
     const closeReserve = document.getElementById('close-reserve');
-    const cancelBorrow = document.getElementById('cancel-borrow');
     const cancelReserve = document.getElementById('cancel-reserve');
-    borrowButton.addEventListener('click', () => {
-        borrowModal.style.display = 'flex';
-    });
+
     reserveButton.addEventListener('click', () => {
         reserveModal.style.display = 'flex';
     });
-    closeBorrow.addEventListener('click', () => {
-        borrowModal.style.display = 'none';
-    });
     closeReserve.addEventListener('click', () => {
         reserveModal.style.display = 'none';
-    });
-    cancelBorrow.addEventListener('click', () => {
-        borrowModal.style.display = 'none';
     });
     cancelReserve.addEventListener('click', () => {
         reserveModal.style.display = 'none';
     });
     window.addEventListener('click', (event) => {
-        if (event.target === borrowModal) {
-            borrowModal.style.display = 'none';
-        } else if (event.target === reserveModal) {
+        if (event.target === reserveModal) {
             reserveModal.style.display = 'none';
         }
     });
 
+    // ВЗЯТЬ КНИГУ
+    borrowButton.addEventListener('click', async () => {
+        const bookId = "{{ book.id }}";
+        const days = prompt("На сколько дней вы хотите взять книгу? (максимум 14)", "14");
+        if (!days) return;
+        const parsedDays = parseInt(days);
+        if (isNaN(parsedDays) || parsedDays < 1 || parsedDays > 14) {
+            alert("Введите число от 1 до 14!");
+            return;
+        }
 
+        const response = await fetch('/borrow_from_book_page', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ book_id: bookId, days: parsedDays })
+        });
+
+        const result = await response.json();
+        alert(result.message);
+        if (response.status === 200) {
+            window.location.href = "/mybooks";
+        }
+    });
+
+    // БРОНИРОВАНИЕ
     document.querySelector('#reserve-modal .modal-content button').onclick = async function () {
         const dateInput = document.querySelector('#reserve-modal input[type="date"]');
         const reserveDate = dateInput.value;
@@ -238,6 +233,5 @@
             window.location.href = "/mybooks";
         }
     };
-
 </script>
 {% endblock %}

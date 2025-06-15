@@ -162,8 +162,17 @@ def home():
 
     if user_name:
         # Получение всех книг из базы данных
+        orders = BookOrder.query.all()
         books = Books.query.all()
-        return render_template("home.html", user_name=user_name, books=books)
+        order_books = []
+        new_books = []
+        for order in orders:
+            if order.status == "reserved" or order.status == "borrowed" or order.status == "confirm_returned" or order.status == 'overdue':
+                order_books.append(order.id_book)
+        for book in books:
+            if book.id not in order_books:
+                new_books.append(book)
+        return render_template("home.html", user_name=user_name, books=new_books)
     else:
         # Перенаправляем на страницу входа, если пользователь не авторизован
         return redirect("/login")
@@ -383,6 +392,13 @@ def mybooks():
     # Получаем все заказы этого пользователя, JOIN-ом подтягиваем книги
     orders = BookOrder.query.filter_by(id_user=user_id).order_by(BookOrder.date_created.desc()).all()
 
+    now = datetime.utcnow()
+    for order in orders:
+        if order.status == 'borrowed' and order.date_due and order.date_due < now:
+            order.status = 'overdue'
+
+    db.session.commit()
+
     # Чтобы подтянуть объект книги:
     for order in orders:
         book = Books.query.get(order.id_book)
@@ -439,6 +455,30 @@ def borrow_book():
         order.date_due = now + timedelta(days=days)
         db.session.commit()
         return jsonify({'message': f'Книга выдана до {order.date_due.strftime("%Y-%m-%d")}'}), 200
+    except Exception as e:
+        return jsonify({'message': 'Ошибка: ' + str(e)}), 500
+
+
+@app.route('/borrow_from_book_page', methods=['POST'])
+def borrow_from_book_page():
+    if not session.get('user_id'):
+        return jsonify({'message': 'Авторизуйтесь!'}), 401
+
+    data = request.get_json()
+    book_id = data.get('book_id')
+    days = int(data.get('days', 14))
+
+    if not book_id:
+        return jsonify({'message': 'ID книги не указан'}), 400
+
+    try:
+        now = datetime.utcnow()
+        new_order = BookOrder(id_user=session['user_id'], date_booked_until=now, id_book=book_id, status='borrowed', date_borrowed=datetime.utcnow(), date_due=datetime.utcnow() + timedelta(days=days), date_created=datetime.utcnow())
+        db.session.add(new_order)
+        db.session.commit()
+
+        return jsonify({'message': f'Книга успешно выдана до {(new_order.date_due).strftime("%Y-%m-%d")}'}), 200
+
     except Exception as e:
         return jsonify({'message': 'Ошибка: ' + str(e)}), 500
 
