@@ -182,11 +182,28 @@ def home():
 def search():
     query = request.args.get('query')
     if query:
-
         books = Books.query.filter(Books.title.contains(query) | Books.author.contains(query) | Books.description.contains(query) | Books.genre.contains(query)).all()
+        orders = BookOrder.query.all()
+        order_books = []
+        new_books = []
+        for order in orders:
+            if order.status == "reserved" or order.status == "borrowed" or order.status == "confirm_returned" or order.status == 'overdue':
+                order_books.append(order.id_book)
+        for book in books:
+            if book.id not in order_books:
+                new_books.append(book)
     else:
         books = Books.query.all()
-    return render_template('search_results.html', books=books, query=query)
+        orders = BookOrder.query.all()
+        order_books = []
+        new_books = []
+        for order in orders:
+            if order.status == "reserved" or order.status == "borrowed" or order.status == "confirm_returned" or order.status == 'overdue':
+                order_books.append(order.id_book)
+        for book in books:
+            if book.id not in order_books:
+                new_books.append(book)
+    return render_template('search_results.html', books=new_books, query=query)
 
 
 @app.get("/profile")
