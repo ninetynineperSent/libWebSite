@@ -12,6 +12,7 @@ from flask import (
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+from collections import Counter
 import secrets
 import base64
 import io
@@ -607,6 +608,66 @@ def api_reset_code():
     order.confirm_code = None
     db.session.commit()
     return jsonify({'success': True})
+
+
+@app.get("/admin/deletebook")
+def delete_book_page():
+    if not session.get("is_admin"):
+        return redirect("/home")
+    
+    books = Books.query.all()
+    orders = BookOrder.query.filter(BookOrder.status.in_(['reserved', 'borrowed', 'confirm_returned', 'overdue'])).all()
+    unavailable_ids = set(order.id_book for order in orders)
+
+    return render_template("admin_deletebook.html", books=books, unavailable_ids=unavailable_ids)
+
+
+@app.route('/admin/activebooks')
+def admin_active_books():
+    if not session.get("is_admin"):
+        return redirect("/home")
+
+    active_statuses = ['reserved', 'borrowed', 'confirm_returned', 'overdue']
+    orders = BookOrder.query.filter(BookOrder.status.in_(active_statuses)).order_by(BookOrder.date_created.desc()).all()
+
+    status_counts = Counter()
+    for order in orders:
+        book = Books.query.get(order.id_book)
+        user = User.query.get(order.id_user)
+
+        order.book_title = book.title
+        order.book_image_url = f"/img_book/{book.id}"
+        order.user_name = user.name
+        order.user_email = user.email
+        order.user_number = user.number
+
+        status_counts[order.status] += 1
+
+    return render_template("active_books.html", orders=orders, status_counts=status_counts)
+
+
+@app.post("/admin/deletebook")
+def delete_book_api():
+    if not session.get("is_admin"):
+        return jsonify({'message': 'Доступ только для админа!'}), 403
+
+    data = request.get_json()
+    book_id = data.get("book_id")
+    
+    active_orders = BookOrder.query.filter_by(id_book=book_id).filter(
+        BookOrder.status.in_(['reserved', 'borrowed', 'confirm_returned', 'overdue'])
+    ).first()
+
+    if active_orders:
+        return jsonify({"message": "Книга сейчас используется и не может быть удалена"}), 400
+
+    book = Books.query.get(book_id)
+    if book:
+        db.session.delete(book)
+        db.session.commit()
+        return jsonify({"message": "Книга удалена"}), 200
+    else:
+        return jsonify({"message": "Книга не найдена"}), 404
 
 
 # Загрузка

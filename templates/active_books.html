@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Активные книги{% endblock %}
+
+{% block body %}
+<h2 style="text-align:center; margin-top: 2rem;">Активные книги</h2>
+
+<div style="display: flex; justify-content: center; margin-top: 1rem;">
+    <label for="statusFilter" style="margin-right: 10px;">Фильтр по статусу:</label>
+    <select id="statusFilter" style="padding: 6px 12px; border-radius: 6px;">
+        <option value="all">Все</option>
+        <option value="reserved">Забронирована ({{ status_counts['reserved'] }})</option>
+        <option value="borrowed">Выдана ({{ status_counts['borrowed'] }})</option>
+        <option value="confirm_returned">Ожидает проверки ({{ status_counts['confirm_returned'] }})</option>
+        <option value="overdue">Просрочено ({{ status_counts['overdue'] }})</option>
+    </select>
+</div>
+
+<div id="ordersContainer" style="display: flex; flex-direction: column; align-items: center; margin-top: 2rem;">
+    {% for order in orders %}
+    <div class="order-card" data-status="{{ order.status }}"
+        style="background:#E6CCB2; padding:16px; margin-bottom:16px; border-radius:10px; max-width:600px; width:90%; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+        <img src="{{ order.book_image_url }}" alt="Обложка"
+            style="width:100px; float:left; margin-right:16px; border-radius:8px;">
+        <div>
+            <strong>{{ order.book_title }}</strong><br>
+            <div>Пользователь: <b>{{ order.user_name }}</b></div>
+            <div style="color:#000000; font-size: 13px;"> {{ order.user_email }}<br> {{ order.user_number }}</div>
+            {% if order.status == 'reserved' %}
+            Статус: <b style="color:#eca500">Забронирована</b><br>
+            Бронь до: {{ order.date_booked_until.strftime('%d.%m.%Y') }}
+            {% elif order.status == 'borrowed' %}
+            Статус: <b style="color:#b30f0f">Выдана</b><br>
+            Взята: {{ order.date_borrowed.strftime('%d.%m.%Y') }}<br>
+            Вернуть до: {{ order.date_due.strftime('%d.%m.%Y') }}
+            {% elif order.status == 'confirm_returned' %}
+            Статус: <b style="color:#eca500">Ожидает проверки</b><br>
+            Взята: {{ order.date_borrowed.strftime('%d.%m.%Y') }}<br>
+            Вернуть до: {{ order.date_due.strftime('%d.%m.%Y') }}
+            {% elif order.status == 'overdue' %}
+            Статус: <b style="color:#3f0202">Просрочено</b><br>
+            Нужно было вернуть до: {{ order.date_due.strftime('%d.%m.%Y') }}
+            {% endif %}
+        </div>
+        <div style="clear:both;"></div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    const filter = document.getElementById('statusFilter');
+    const cards = document.querySelectorAll('.order-card');
+
+    filter.addEventListener('change', () => {
+        const selected = filter.value;
+        cards.forEach(card => {
+            const status = card.getAttribute('data-status');
+            card.style.display = (selected === 'all' || status === selected) ? 'block' : 'none';
+        });
+    });
+</script>
+{% endblock %}

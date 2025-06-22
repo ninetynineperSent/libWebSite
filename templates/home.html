@@ -10,6 +10,16 @@
 </div>
 
 
+{% if session['is_admin'] %}
+<div class="admin-buttons">
+    <a href="/admin/addbook" class="admin-button">Добавить книгу</a>
+    <a href="/admin/notifications" class="admin-button">Уведомления</a>
+    <a href="/admin/activebooks" class="admin-button">Активные книги</a>
+    <a href="/admin/deletebook" class="admin-button danger">Удалить книгу</a>
+</div>
+{% endif %}
+
+
 <style>
     .welcome-box {
         display: flex;
@@ -69,6 +79,39 @@
         text-align: left;
         width: 191px;
         /* Текст выровнен по левому краю */
+    }
+    .admin-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+    }
+
+    .admin-button {
+    background-color: #B08968;
+    color: black;
+    padding: 0.75rem 1.5rem;
+    font-size: 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+    }
+
+    .admin-button:hover {
+    background-color: #DDB892;
+    }
+
+    .admin-button.danger {
+    background-color: #d9534f;
+    color: white;
+    }
+
+    .admin-button.danger:hover {
+    background-color: #c9302c;
     }
 </style>
 
